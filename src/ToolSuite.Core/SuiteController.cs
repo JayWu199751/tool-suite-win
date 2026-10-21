@@ -7,21 +7,35 @@ public sealed class SuiteController
         [("clipboard", "剪贴板"), ("perf-monitor", "性能条"), ("pinto", "便签")];
     private readonly SuiteSettingsStore store;
     private readonly Dictionary<string, IToolModule> modules;
+    private readonly ISuiteAutoStart? autoStart;
     private readonly Dictionary<string, ToolState> states = new();
     private readonly Dictionary<string, string?> errors = new();
     private readonly SemaphoreSlim gate = new(1, 1);
     private ThemePreference effectiveTheme = ThemePreference.Light;
     private ThemePreference? appliedTheme;
     public SuiteSettings Settings { get; }
+    /// <summary>最近一次开机启动操作的真实失败原因；成功时清空，界面据此如实显示而不伪装已生效。</summary>
+    public string? AutoStartError { get; private set; }
     public event Action? Changed;
     /// <summary>主题偏好或有效外观变化时触发；普通命令与启停状态变化不触发，避免无谓重建主题资源。</summary>
     public event Action? AppearanceChanged;
     public event Action<string>? ErrorReported;
-    public SuiteController(SuiteSettingsStore store, IEnumerable<IToolModule> modules)
+    public SuiteController(SuiteSettingsStore store, IEnumerable<IToolModule> modules, ISuiteAutoStart? autoStart = null)
     {
         this.store = store;
         this.modules = modules.ToDictionary(x => x.Id);
+        this.autoStart = autoStart;
         Settings = store.Load();
+        // 注册表是开机启动的实际状态来源：外部删除或写入失败的残留都不能显示成已生效。
+        if (autoStart is not null)
+        {
+            try { Settings.StartWithWindows = autoStart.IsRegistered; }
+            catch (Exception ex)
+            {
+                Settings.StartWithWindows = false;
+                AutoStartError = "无法读取开机启动状态：" + ex.Message;
+            }
+        }
         foreach (var (id, _) in Catalog) states[id] = this.modules.ContainsKey(id) ? ToolState.Disabled : ToolState.Unavailable;
     }
     public IReadOnlyList<ToolStatus> Tools => Catalog.Select(x => new ToolStatus(x.Id, x.Name,
@@ -100,6 +114,50 @@ public sealed class SuiteController
         }
         catch (Exception ex) { ReportError(ex.Message); return false; }
         finally { gate.Release(); Changed?.Invoke(); }
+    }
+    /// <summary>统一开机启动开关：先改真实启动项再落盘，任一步失败都回滚并如实返回失败。
+    /// 只有注册表确认生效后才把设置记为开启。</summary>
+    public bool SetStartWithWindows(bool enabled)
+    {
+        if (autoStart is null)
+        {
+            AutoStartError = "当前运行方式无法管理开机启动（需从安装后的正式 EXE 运行）。";
+            ReportError(AutoStartError);
+            Changed?.Invoke();
+            return false;
+        }
+        var previous = Settings.StartWithWindows;
+        try
+        {
+            autoStart.Apply(enabled);
+            if (autoStart.IsRegistered != enabled)
+                throw new InvalidOperationException(enabled ? "写入后未找到套件启动项。" : "删除后套件启动项仍然存在。");
+        }
+        catch (Exception ex)
+        {
+            // 注册表操作可能在抛出前已部分生效：尽力回到操作前状态，避免界面显示关闭但实际仍会自启。
+            try { autoStart.Apply(previous); } catch { /* 原始失败原因优先。 */ }
+            Settings.StartWithWindows = previous;
+            AutoStartError = ex.Message;
+            ReportError(ex.Message);
+            Changed?.Invoke();
+            return false;
+        }
+        Settings.StartWithWindows = enabled;
+        try { store.Save(Settings); }
+        catch (Exception ex)
+        {
+            // 设置没有保存成功，注册表也不能保留新状态。
+            try { autoStart.Apply(previous); } catch { /* 原始保存错误优先。 */ }
+            Settings.StartWithWindows = previous;
+            AutoStartError = "开机启动设置未保存：" + ex.Message;
+            ReportError(AutoStartError);
+            Changed?.Invoke();
+            return false;
+        }
+        AutoStartError = null;
+        Changed?.Invoke();
+        return true;
     }
     public void SetTheme(ThemePreference theme)
     {

@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ToolSuite.SuiteChecks" />
+    <InternalsVisibleTo Include="ToolSuite.InstallerChecks" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../ToolSuite.Core/ToolSuite.Core.csproj" />
