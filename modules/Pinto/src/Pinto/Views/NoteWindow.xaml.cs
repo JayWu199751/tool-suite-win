@@ -9,6 +9,7 @@ public partial class NoteWindow : Window
 {
     private readonly AppCoordinator _coordinator;
     private readonly NoteData _data;
+    private HwndSource? _source;
     private bool _allowClose;
     private bool _ready;
     private bool _interactivePlacement;
@@ -29,11 +30,7 @@ public partial class NoteWindow : Window
         _coordinator.ApplyResources(this);
         InitializeComponent();
         DataContext = Model;
-        Model.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(NoteViewModel.IsEmpty) && Model.IsEmpty)
-                Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => ItemsScroller.ScrollToHome());
-        };
+        Model.PropertyChanged += OnModelPropertyChanged;
         Width = Math.Clamp(data.Width, MinWidth, 1600);
         Height = Math.Clamp(data.Height, MinHeight, 2000);
         var work = SystemParameters.WorkArea;
@@ -41,7 +38,8 @@ public partial class NoteWindow : Window
         Top = data.Top.HasValue ? Math.Clamp(data.Top.Value, -100000, 100000) : work.Top + (work.Height - Height) / 2;
         SourceInitialized += (_, _) =>
         {
-            HwndSource.FromHwnd(new WindowInteropHelper(this).Handle)?.AddHook(PlacementMessage);
+            _source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+            _source?.AddHook(PlacementMessage);
             NativeWindow.EnsureTrayOnly(this);
             ApplyTheme();
         };
@@ -54,6 +52,7 @@ public partial class NoteWindow : Window
             CaptureLayout();
         };
         Closing += OnClosing;
+        Closed += OnClosed;
         ContextMenuOpening += Window_ContextMenuOpening;
         ContextMenu = new ContextMenu();
     }
@@ -74,6 +73,12 @@ public partial class NoteWindow : Window
         _data.Width = Width;
         _data.Height = Height;
         _coordinator.ScheduleSave();
+    }
+
+    private void OnModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(NoteViewModel.IsEmpty) && Model.IsEmpty)
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => ItemsScroller.ScrollToHome());
     }
 
     public void RestorePlacement()
@@ -123,12 +128,30 @@ public partial class NoteWindow : Window
     }
 
     public void ForceClose() { _allowClose = true; Close(); }
+    /// <summary>隐藏保存成功后的回收入口：释放原生钩子、视图模型与菜单引用后关闭窗口。</summary>
+    internal void Release()
+    {
+        _allowClose = true;
+        Close();
+        DataContext = null;
+        ContextMenu = null;
+    }
     public void FocusNewItem() { Activate(); NewItemEditor.Focus(); }
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        // 窗口关闭即销毁 HWND；显式摘钩并断开视图模型，隐藏期间不保留窗口侧订阅。
+        _source?.RemoveHook(PlacementMessage);
+        _source = null;
+        Model.PropertyChanged -= OnModelPropertyChanged;
+        DataContext = null;
+        ContextMenu = null;
+    }
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         if (_allowClose) return;
         e.Cancel = true;
-        _coordinator.HideNote(Model.Id);
+        // 在 Closing 回调里直接回收会重入 Close；把隐藏/按需释放排到本次关闭事件返回之后。
+        Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() => _coordinator.HideNote(Model.Id)));
     }
     private void Hide_Click(object sender, RoutedEventArgs e) => _coordinator.HideNote(Model.Id);
     private void Window_StateChanged(object? sender, EventArgs e)

@@ -22,5 +22,5 @@
     <Project Path="modules/Pinto/tests/Pinto.DesktopChecks/Pinto.DesktopChecks.csproj" />
     <Project Path="modules/Pinto/tests/Pinto.ModuleChecks/Pinto.ModuleChecks.csproj" />
   </Folder>
-  <Folder Name="/checks/"><Project Path="tests/ToolSuite.ClipboardUiChecks/ToolSuite.ClipboardUiChecks.csproj" /><Project Path="tests/ToolSuite.ClipboardChecks/ToolSuite.ClipboardChecks.csproj" /><Project Path="tests/ToolSuite.SuiteChecks/ToolSuite.SuiteChecks.csproj" /></Folder>
+  <Folder Name="/checks/"><Project Path="tests/ToolSuite.ClipboardUiChecks/ToolSuite.ClipboardUiChecks.csproj" /><Project Path="tests/ToolSuite.ClipboardChecks/ToolSuite.ClipboardChecks.csproj" /><Project Path="tests/ToolSuite.SuiteChecks/ToolSuite.SuiteChecks.csproj" /><Project Path="tests/ToolSuite.LifecycleChecks/ToolSuite.LifecycleChecks.csproj" /></Folder>
 </Solution>

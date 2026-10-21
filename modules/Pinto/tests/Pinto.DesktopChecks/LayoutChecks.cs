@@ -29,7 +29,10 @@ internal static class LayoutChecks
         {
             coordinator = new(store, store.Load());
             await Task.Delay(180);
-            check("启动按每张便签的显示状态分别恢复", coordinator.Windows[data.Notes[0].Id].IsVisible && !coordinator.Windows[data.Notes[1].Id].IsVisible && coordinator.Windows[data.Notes[2].Id].IsVisible);
+            check("启动按每张便签的显示状态分别恢复", coordinator.Windows.Count == 2
+                && coordinator.Windows[data.Notes[0].Id].IsVisible
+                && !coordinator.Windows.ContainsKey(data.Notes[1].Id)
+                && coordinator.Windows[data.Notes[2].Id].IsVisible);
             var moved = coordinator.Windows[data.Notes[0].Id];
             moved.Left += 15;
             moved.Top += 21;
@@ -44,14 +47,14 @@ internal static class LayoutChecks
             coordinator.Dispose();
             coordinator = new(store, store.Load());
             await Task.Delay(180);
-            check("重启恢复所有便签各自的位置和大小", saved.Notes.All(note =>
-            {
-                var window = coordinator.Windows[note.Id];
-                return Close(note.Left, window.Left) && Close(note.Top, window.Top) && Close(note.Width, window.Width) && Close(note.Height, window.Height);
-            }));
-            check("重启保持隐藏便签关闭且可见便签打开", saved.Notes.All(note => coordinator.Windows[note.Id].IsVisible == note.IsVisible));
+            check("重启恢复可见便签各自的位置和大小", Close(saved.Notes[0].Left, coordinator.Windows[saved.Notes[0].Id].Left)
+                && Close(saved.Notes[0].Top, coordinator.Windows[saved.Notes[0].Id].Top)
+                && Close(saved.Notes[0].Width, coordinator.Windows[saved.Notes[0].Id].Width)
+                && Close(saved.Notes[0].Height, coordinator.Windows[saved.Notes[0].Id].Height));
+            check("重启保持隐藏便签无窗口且可见便签打开", coordinator.Windows.Count == 1 && coordinator.Windows[saved.Notes[0].Id].IsVisible);
             coordinator.ActivateVisibleNotes();
-            check("重复启动唤起可见便签并保留隐藏状态", saved.Notes.All(note => coordinator.Windows[note.Id].IsVisible == note.IsVisible));
+            check("重复启动唤起可见便签并保留隐藏状态", coordinator.Windows.Count == 1 && coordinator.Windows[saved.Notes[0].Id].IsVisible
+                && !store.Load().Data.Notes[1].IsVisible);
             coordinator.ShowNote(saved.Notes[1].Id);
             coordinator.Flush();
             check("托盘恢复隐藏便签保留原位置和大小并记录显示状态", coordinator.Windows[saved.Notes[1].Id].IsVisible && Close(coordinator.Windows[saved.Notes[1].Id].Width, saved.Notes[1].Width) && store.Load().Data.Notes[1].IsVisible);
@@ -60,7 +63,7 @@ internal static class LayoutChecks
             coordinator = new(store, store.Load());
             await Task.Delay(180);
             coordinator.ActivateVisibleNotes();
-            check("全部隐藏时启动或重复启动均仅保留托盘", coordinator.Windows.Values.All(window => !window.IsVisible) && store.Load().Data.Notes.All(note => !note.IsVisible));
+            check("全部隐藏时启动或重复启动均仅保留托盘", coordinator.Windows.Count == 0 && store.Load().Data.Notes.All(note => !note.IsVisible));
         }
         finally { coordinator?.Dispose(); }
     }

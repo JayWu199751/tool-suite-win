@@ -112,7 +112,12 @@ internal static class DockingChecks
             coordinator.Dispose();
             coordinator = new(store, store.Load());
             await Task.Delay(120);
-            check("重启保持各便签的贴边记忆及隐藏状态", coordinator.Windows.Values.All(note => !note.IsVisible) && coordinator.Windows[data.Notes[0].Id].DockedEdges == (DockEdges.Right | DockEdges.Bottom) && coordinator.Windows[data.Notes[1].Id].DockedEdges == (DockEdges.Left | DockEdges.Top));
+            var savedAfterHide = store.Load().Data;
+            check("重启保持各便签的贴边记忆及隐藏状态",
+                coordinator.Windows.Count == 0
+                && savedAfterHide.Notes.All(note => !note.IsVisible)
+                && savedAfterHide.Notes[0].DockEdges == (DockEdges.Right | DockEdges.Bottom)
+                && savedAfterHide.Notes[1].DockEdges == (DockEdges.Left | DockEdges.Top));
             foreach (var note in coordinator.Notes)
             {
                 coordinator.ShowNote(note.Id);
@@ -172,6 +177,9 @@ internal static class DockingChecks
             await Task.Delay(80);
             check("隐藏的便签不参与相互吸附", hiddenResult.Left == lastProposal.Left && hiddenResult.Top == lastProposal.Top);
             coordinator.ShowNote(peer.Model.Id);
+            // 隐藏保存成功后窗口已释放：重新取回重建后的窗口与句柄，旧句柄不再有效。
+            peer = coordinator.Windows[data.Notes[1].Id];
+            peerHandle = new WindowInteropHelper(peer).Handle;
             var beside = Move(handle, lastProposal, resizing: false);
             await Task.Delay(80);
             GetWindowRect(peerHandle, out var peerBounds);

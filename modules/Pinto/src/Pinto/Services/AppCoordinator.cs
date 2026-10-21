@@ -62,9 +62,10 @@ public sealed class AppCoordinator : IDisposable
     }
     public void ShowNote(Guid id)
     {
-        if (!_windows.TryGetValue(id, out var window)) return;
-        var note = _state.Notes.First(note => note.Id == id);
+        if (_state.Notes.FirstOrDefault(note => note.Id == id) is not { } note) return;
         note.IsVisible = true;
+        // 隐藏时窗口已释放：按需重建视图模型与窗口，再恢复内容与布局。
+        var window = EnsureWindow(note);
         window.Show();
         window.RestorePlacement();
         window.Activate();
@@ -72,21 +73,38 @@ public sealed class AppCoordinator : IDisposable
     }
     public void HideNote(Guid id)
     {
-        if (!_windows.TryGetValue(id, out var window)) return;
-        window.Model.CommitPendingEdits();
-        window.CaptureLayout();
-        var note = _state.Notes.First(note => note.Id == id);
+        // 关闭事件可能排到停用之后执行；已释放时不再写盘或访问窗口。
+        if (_disposed) return;
+        if (_state.Notes.FirstOrDefault(note => note.Id == id) is not { } note) return;
+        if (_windows.TryGetValue(id, out var window))
+        {
+            // 先在窗口仍存活时提交编辑并捕获布局，保存成功后才回收窗口。
+            window.Model.CommitPendingEdits();
+            window.CaptureLayout();
+        }
         var visible = note.IsVisible;
         note.IsVisible = false;
         ScheduleSave();
-        if (!Flush()) { note.IsVisible = visible; return; }
-        window.Hide();
+        if (!Flush())
+        {
+            // 保存失败：保留窗口、视图模型与未提交草稿，数据不丢，修复后可再次隐藏。
+            note.IsVisible = visible;
+            return;
+        }
+        if (window is not null) ReleaseWindow(window);
     }
     public void ShowAll()
     {
         if (_state.Notes.Count == 0) { NewNote(); return; }
-        foreach (var note in _state.Notes) { note.IsVisible = true; var window = _windows[note.Id]; window.Show(); window.RestorePlacement(); }
-        _windows.Values.LastOrDefault()?.Activate();
+        NoteWindow? last = null;
+        foreach (var note in _state.Notes)
+        {
+            note.IsVisible = true;
+            last = EnsureWindow(note);
+            last.Show();
+            last.RestorePlacement();
+        }
+        last?.Activate();
         ScheduleSave();
     }
     public void ActivateVisibleNotes()
@@ -95,7 +113,7 @@ public sealed class AppCoordinator : IDisposable
         NoteWindow? last = null;
         foreach (var note in _state.Notes.Where(note => note.IsVisible))
         {
-            last = _windows[note.Id];
+            last = EnsureWindow(note);
             last.Show();
             last.RestorePlacement();
         }
@@ -112,15 +130,21 @@ public sealed class AppCoordinator : IDisposable
             foreach (var note in _state.Notes) note.IsVisible = visibility[note.Id];
             return;
         }
-        foreach (var window in _windows.Values) window.Hide();
+        foreach (var window in _windows.Values.ToArray()) ReleaseWindow(window);
     }
     public void DeleteNote(Guid id)
     {
-        if (!_windows.TryGetValue(id, out var window)) return;
-        if (MessageBox.Show(window, $"删除“{window.Model.Title}”及其全部清单项？此操作无法撤销。", "删除便签", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
-        _state.Notes.RemoveAll(note => note.Id == id);
+        if (_state.Notes.FirstOrDefault(note => note.Id == id) is not { } note) return;
+        _windows.TryGetValue(id, out var window);
+        var title = window?.Model.Title ?? note.Title;
+        var owner = window ?? _windows.Values.FirstOrDefault(candidate => candidate.IsVisible);
+        var result = owner is null
+            ? MessageBox.Show($"删除“{title}”及其全部清单项？此操作无法撤销。", "删除便签", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No)
+            : MessageBox.Show(owner, $"删除“{title}”及其全部清单项？此操作无法撤销。", "删除便签", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (result != MessageBoxResult.Yes) return;
+        _state.Notes.RemoveAll(candidate => candidate.Id == id);
         _windows.Remove(id);
-        window.ForceClose();
+        window?.ForceClose();
         ScheduleSave();
         Flush();
     }
@@ -213,18 +237,31 @@ public sealed class AppCoordinator : IDisposable
     public void ApplyResources(FrameworkElement target) => _theme.ApplyResources(target);
     private void InstallWindows()
     {
-        foreach (var note in _state.Notes)
+        // 只为已显示便签建窗；隐藏便签保持无窗口，显示时再重建。
+        foreach (var note in _state.Notes.Where(note => note.IsVisible))
         {
-            var window = CreateWindow(note);
-            window.ShowActivated = false;
-            if (note.IsVisible) window.Show();
+            var window = EnsureWindow(note);
+            window.Show();
         }
+    }
+    private NoteWindow EnsureWindow(NoteData note)
+    {
+        if (_windows.TryGetValue(note.Id, out var existing)) return existing;
+        var window = CreateWindow(note);
+        window.ShowActivated = false;
+        return window;
     }
     private NoteWindow CreateWindow(NoteData note)
     {
         var window = new NoteWindow(note, this);
         _windows.Add(note.Id, window);
         return window;
+    }
+    /// <summary>隐藏保存成功后回收窗口：先移出索引再关闭，避免关闭路径再次触发隐藏。</summary>
+    private void ReleaseWindow(NoteWindow window)
+    {
+        _windows.Remove(window.Model.Id);
+        window.Release();
     }
     private void OnThemeChanged()
     {
