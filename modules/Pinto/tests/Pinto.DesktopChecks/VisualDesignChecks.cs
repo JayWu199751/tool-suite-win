@@ -99,6 +99,15 @@ internal static class VisualDesignChecks
                         var lineCenter = text.TranslatePoint(new Point(0, text.Padding.Top + FirstLineHeight(text) / 2), window).Y;
                         return Math.Abs(circleCenter - lineCenter) <= 1;
                     }));
+                // 圆圈外缘（描边外沿）与标题文字左缘对齐：清单左栏不再比标题多缩进一截。
+                var titleLeft = ((TextBlock)window.FindName("TitleLabel")).TranslatePoint(new Point(), window).X;
+                check($"{label}：完成圆圈外缘与标题文字左缘对齐",
+                    rows.Length > 0 && rows.All(row =>
+                    {
+                        var checkbox = Descendants<CheckBox>(row).First();
+                        var circle = (System.Windows.Shapes.Ellipse)checkbox.Template.FindName("Circle", checkbox);
+                        return Math.Abs(circle.TranslatePoint(new Point(), window).X - 0.625 - titleLeft) <= 1;
+                    }));
                 window.Activate();
                 var newEditor = (TextBox)window.FindName("NewItemEditor");
                 newEditor.Focus();

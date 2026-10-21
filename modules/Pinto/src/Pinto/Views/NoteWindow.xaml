@@ -42,7 +42,9 @@
                                              整格再随行内容居中，多行时圆圈贴在首行而不是整段中间。 -->
                                         <Grid Grid.Column="0" VerticalAlignment="Top">
                                             <TextBlock Text="{Binding Text}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Padding="0,4" Visibility="Hidden" Focusable="False" IsHitTestVisible="False" />
-                                            <CheckBox Style="{StaticResource CheckCircle}" IsChecked="{Binding IsCompleted, Mode=TwoWay}" Foreground="{Binding DataContext.CheckmarkBrush, RelativeSource={RelativeSource AncestorType=Window}}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Text}" AutomationProperties.HelpText="空格切换完成状态；Alt 加上下方向键排序；Shift+F10 打开项目菜单" ToolTip="标记完成 / 未完成" />
+                                            <!-- 圆圈视觉左缘对齐标题文字左缘：圆圈只有 18 DIP，居中在 28 DIP 命中区里左右各留 5 DIP，
+                                                 所以命中区向左借 4 DIP 行内边距，让圆圈外沿而不是命中区外沿与标题齐平。 -->
+                                            <CheckBox Style="{StaticResource CheckCircle}" Margin="-4,0,0,0" HorizontalAlignment="Left" IsChecked="{Binding IsCompleted, Mode=TwoWay}" Foreground="{Binding DataContext.CheckmarkBrush, RelativeSource={RelativeSource AncestorType=Window}}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Text}" AutomationProperties.HelpText="空格切换完成状态；Alt 加上下方向键排序；Shift+F10 打开项目菜单" ToolTip="标记完成 / 未完成" />
                                         </Grid>
                                         <TextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Top" Padding="0,4">
                                             <TextBlock.Style><Style TargetType="TextBlock">
