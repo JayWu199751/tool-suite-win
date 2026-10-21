@@ -6,4 +6,12 @@
   <Folder Name="/tests/">
     <Project Path="tests/ToolSuite.HostChecks/ToolSuite.HostChecks.csproj" />
   </Folder>
+  <Folder Name="/modules/Pinto/">
+    <Project Path="modules/Pinto/src/Pinto.Core/Pinto.Core.csproj" />
+    <Project Path="modules/Pinto/src/Pinto/Pinto.csproj" />
+    <Project Path="modules/Pinto/tests/Pinto.Checks/Pinto.Checks.csproj" />
+    <Project Path="modules/Pinto/tests/Pinto.DesktopChecks/Pinto.DesktopChecks.csproj" />
+    <Project Path="modules/Pinto/tests/Pinto.ModuleChecks/Pinto.ModuleChecks.csproj" />
+  </Folder>
 </Solution>
+

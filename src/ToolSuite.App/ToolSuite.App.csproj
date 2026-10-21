@@ -5,4 +5,6 @@
     <ApplicationManifest>app.manifest</ApplicationManifest><AssemblyName>ToolSuite</AssemblyName>
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="../ToolSuite.Core/ToolSuite.Core.csproj" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../../modules/Pinto/src/Pinto/Pinto.csproj" /></ItemGroup>
 </Project>
+

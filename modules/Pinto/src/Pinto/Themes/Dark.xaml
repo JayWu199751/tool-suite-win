@@ -1,0 +1,22 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#232325" />
+    <SolidColorBrush x:Key="SolidSurfaceBrush" Color="#232325" />
+    <SolidColorBrush x:Key="TextBrush" Color="#F2F2F4" />
+    <SolidColorBrush x:Key="SecondaryBrush" Color="#ADADB5" />
+    <SolidColorBrush x:Key="CompletedBrush" Color="#ADADB5" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#454548" />
+    <SolidColorBrush x:Key="ActiveBorderBrush" Color="#76767E" />
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#3B3B3F" />
+    <SolidColorBrush x:Key="InputBrush" Color="#2E2E31" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#45454B" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#353539" />
+    <SolidColorBrush x:Key="PressedBrush" Color="#424248" />
+    <SolidColorBrush x:Key="CircleBrush" Color="#ADADB5" />
+    <SolidColorBrush x:Key="FocusBrush" Color="#8EB5FA" />
+    <SolidColorBrush x:Key="SelectionBrush" Color="#375787" />
+    <SolidColorBrush x:Key="SelectionTextBrush" Color="#F2F2F4" />
+    <SolidColorBrush x:Key="DisabledBrush" Color="#8E8E96" />
+    <SolidColorBrush x:Key="CloseHoverBrush" Color="#FF9AA5" />
+    <SolidColorBrush x:Key="ClosePressedBrush" Color="#E98490" />
+    <SolidColorBrush x:Key="CloseForegroundBrush" Color="#232325" />
+</ResourceDictionary>

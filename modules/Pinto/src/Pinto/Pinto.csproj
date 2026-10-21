@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pinto.Core\Pinto.Core.csproj" /><ProjectReference Include="../../../../src/ToolSuite.Core/ToolSuite.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <ApplicationIcon>Assets\Pinto.ico</ApplicationIcon>
+    <AssemblyName>Pinto</AssemblyName>
+    <RootNamespace>Pinto</RootNamespace>
+    <!-- WPF 通过清单声明 PerMonitorV2；WinForms 仅提供托盘，不管理应用入口。 -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Pinto.ico" />
+    <InternalsVisibleTo Include="Pinto.DesktopChecks" />
+  </ItemGroup>
+
+</Project>
+
