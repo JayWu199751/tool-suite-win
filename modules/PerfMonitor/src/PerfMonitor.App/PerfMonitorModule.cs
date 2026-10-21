@@ -15,6 +15,9 @@ public sealed class PerfMonitorModule : IToolModule
     private WpfStartupShellHost? _host;
     private StartupShellController? _controller;
     private SettingsWindow? _offlineSettings;
+    private bool _recoveredOfflineSettings;
+    public event Action? SettingsChanged;
+    public bool RecoveredInvalidSettings => _recoveredOfflineSettings || _controller?.RecoveredInvalidSettingsOnStartup == true;
     public string Id => "perf-monitor";
     public string DisplayName => "性能条";
     public IReadOnlyList<ToolCommand> Commands =>
@@ -36,7 +39,8 @@ public sealed class PerfMonitorModule : IToolModule
         if (_controller is not null) return Task.CompletedTask;
         CloseOfflineSettings();
         NormalizeSuiteManagedSettings();
-        _host = new WpfStartupShellHost(Store(), context.ReportError);
+        _host = new WpfStartupShellHost(Store(), context.ReportError,
+            context.RequestSettings is { } showSettings ? () => showSettings(Id) : null);
         try
         {
             _controller = new StartupShellController(_host);
@@ -82,6 +86,7 @@ public sealed class PerfMonitorModule : IToolModule
         _controller?.ApplyTheme(EffectiveTheme);
         if (_offlineSettings is not null)
             _offlineSettings.ApplySettings(Store().Load() with { Theme = EffectiveTheme, Autostart = false }, false);
+        SettingsChanged?.Invoke();
     }
     private BarTheme EffectiveTheme => _theme == ThemePreference.Dark ? BarTheme.Dark : BarTheme.Light;
     /// <summary>套件接管后，模块设置里的主题与自启只保留为兼容字段：启动时归一为套件有效主题且自启关闭。</summary>
@@ -106,6 +111,7 @@ public sealed class PerfMonitorModule : IToolModule
     }
     private void OpenSettings()
     {
+        if (_context?.RequestSettings is { } showSettings) { showSettings(Id); return; }
         if (_controller is { } controller)
         {
             // 直接使用同一公开设置更新入口；关闭窗口立即释放，不进入旧 App 的隐藏链。
@@ -142,4 +148,30 @@ public sealed class PerfMonitorModule : IToolModule
         window.Close();
     }
     private static Task Run(Action action) { action(); return Task.CompletedTask; }
+
+    /// <summary>统一设置复用同一运行/停用读写入口，避免离线编辑启动采样。</summary>
+    public PerformanceSettings ReadSettings()
+    {
+        if (_controller is { } controller) return controller.Settings with { Theme = EffectiveTheme, Autostart = false };
+        var store = Store();
+        var settings = store.Load();
+        _recoveredOfflineSettings |= store.RecoveredInvalidSettingsOnLastLoad;
+        return settings with { Theme = EffectiveTheme, Autostart = false };
+    }
+
+    public PerformanceSettings UpdateSettings(SettingsPatch patch)
+    {
+        // null 表示不请求模块自启操作；套件的 Run 项只由宿主通用设置管理。
+        patch = patch with { Theme = EffectiveTheme, Autostart = null };
+        PerformanceSettings next;
+        if (_controller is { } controller) next = controller.UpdateSettings(patch);
+        else
+        {
+            var store = Store();
+            next = store.Load().Apply(patch) with { Autostart = false };
+            store.Save(next);
+        }
+        SettingsChanged?.Invoke();
+        return next;
+    }
 }

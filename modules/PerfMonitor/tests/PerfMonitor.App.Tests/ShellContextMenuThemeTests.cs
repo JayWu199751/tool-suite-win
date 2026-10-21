@@ -15,13 +15,13 @@ public sealed class ShellContextMenuThemeTests
         var menu = new ContextMenu();
         new ShellContextMenuTheme(menu, dark: true);
 
-        AssertBrush(menu, "ShellMenuBackgroundBrush", 0xFF, 0x1D, 0x1D, 0x1F);
-        AssertBrush(menu, "ShellMenuForegroundBrush", 0xFF, 0xF5, 0xF5, 0xF7);
-        AssertBrush(menu, "ShellMenuSecondaryBrush", 0xFF, 0x86, 0x86, 0x8B);
-        AssertBrush(menu, "ShellMenuCheckBrush", 0xFF, 0x00, 0x71, 0xE3);
-        AssertBrush(menu, "ShellMenuHoverBrush", 0x0F, 0xFF, 0xFF, 0xFF);
-        AssertBrush(menu, "ShellMenuBorderBrush", 0xFF, 0x33, 0x33, 0x36);
-        AssertBrush(menu, "ShellMenuDividerBrush", 0xFF, 0x2A, 0x2A, 0x2C);
+        AssertBrush(menu, "ShellMenuBackgroundBrush", 0xFF, 0x14, 0x14, 0x19);
+        AssertBrush(menu, "ShellMenuForegroundBrush", 0xFF, 0xF2, 0xF2, 0xF5);
+        AssertBrush(menu, "ShellMenuSecondaryBrush", 0xFF, 0xA0, 0xA0, 0xAC);
+        AssertBrush(menu, "ShellMenuCheckBrush", 0xFF, 0x7B, 0x77, 0xE0);
+        AssertBrush(menu, "ShellMenuHoverBrush", 0x17, 0xFF, 0xFF, 0xFF);
+        AssertBrush(menu, "ShellMenuBorderBrush", 0x1A, 0xFF, 0xFF, 0xFF);
+        AssertBrush(menu, "ShellMenuDividerBrush", 0x0F, 0xFF, 0xFF, 0xFF);
         // 视觉规范：零投影，菜单不再提供投影资源。
         Assert.False(menu.Resources.Contains("ShellMenuShadowEffect"));
     });

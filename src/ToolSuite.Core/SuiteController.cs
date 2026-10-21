@@ -19,6 +19,25 @@ public sealed class SuiteController
     /// <summary>主题偏好或有效外观变化时触发；普通命令与启停状态变化不触发，避免无谓重建主题资源。</summary>
     public event Action? AppearanceChanged;
     public event Action<string>? ErrorReported;
+    public event Action<string>? SettingsRequested;
+
+    /// <summary>供宿主组合设置界面时取得已配置的模块适配器；获取不会启动模块。</summary>
+    public T? GetModule<T>(string id) where T : class, IToolModule
+        => modules.GetValueOrDefault(id) as T;
+
+    public void SetSettingsSectionExpanded(string id, bool expanded)
+    {
+        if (!ToolIds.All.Contains(id)) throw new ArgumentException("未知的工具分类。", nameof(id));
+        var existed = Settings.ExpandedSettingsSections.TryGetValue(id, out var previous);
+        Settings.ExpandedSettingsSections[id] = expanded;
+        try { store.Save(Settings); }
+        catch
+        {
+            if (existed) Settings.ExpandedSettingsSections[id] = previous;
+            else Settings.ExpandedSettingsSections.Remove(id);
+            throw;
+        }
+    }
     public SuiteController(SuiteSettingsStore store, IEnumerable<IToolModule> modules, ISuiteAutoStart? autoStart = null)
     {
         this.store = store;
@@ -212,6 +231,7 @@ public sealed class SuiteController
         finally { gate.Release(); Changed?.Invoke(); }
     }
     private ModuleContext CreateContext(string id) => new(store.ModuleDirectory(id), effectiveTheme,
-        ReportError, SetTheme, () => Settings.Theme);
+        ReportError, SetTheme, () => Settings.Theme,
+        SettingsRequested is null ? null : section => SettingsRequested?.Invoke(section));
     private void ReportError(string message) => ErrorReported?.Invoke(message);
 }

@@ -24,9 +24,13 @@ internal static class Program
             try
             {
                 var log = new List<string>();
-                ContractSingleSourceChecks.Run(Path.Combine(root, "single-source"), log);
-                await ControllerSemanticsChecks.RunAsync(Path.Combine(root, "controller"), log);
-                await HostIntegrationChecks.RunAsync(Path.Combine(root, "host"), log);
+                await UnifiedSettingsChecks.RunAsync(Path.Combine(root, "unified-settings"), log);
+                if (!args.Contains("--unified-settings"))
+                {
+                    ContractSingleSourceChecks.Run(Path.Combine(root, "single-source"), log);
+                    await ControllerSemanticsChecks.RunAsync(Path.Combine(root, "controller"), log);
+                    await HostIntegrationChecks.RunAsync(Path.Combine(root, "host"), log);
+                }
                 foreach (var line in log) Console.WriteLine("PASS " + line);
                 Console.WriteLine("PASS 工单 06 宿主级整合检查全部通过");
             }

@@ -20,7 +20,8 @@ public sealed record ToolCommand(string Id, string Label, Func<CancellationToken
     bool RequiresRunning = true);
 
 public sealed record ModuleContext(string DataDirectory, ThemePreference Theme, Action<string> ReportError,
-    Action<ThemePreference>? RequestThemeChange = null, Func<ThemePreference>? ReadThemePreference = null);
+    Action<ThemePreference>? RequestThemeChange = null, Func<ThemePreference>? ReadThemePreference = null,
+    Action<string>? RequestSettings = null);
 public enum ToolState { Unavailable, Disabled, Running, Failed }
 public sealed record ToolStatus(string Id, string DisplayName, bool Enabled, ToolState State, string? Error,
     IReadOnlyList<ToolCommand> Commands);

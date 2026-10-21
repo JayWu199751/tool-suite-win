@@ -6,7 +6,7 @@
 
 **Status:** resolved
 
-**实施结果：** 隐藏便签在保存成功后释放窗口与订阅、按需重建；设置与导入界面关闭即释放；剪贴板收起清空缩略图缓存并作废在途解码；性能条隐藏暂停采样与时钟；停用与退出取消任务并释放数据文件锁。`ToolSuite.LifecycleChecks` 40 条通过，`SuiteChecks`/`Pinto.ModuleChecks`/`Pinto.DesktopChecks` 随语义更新后全量通过；真实托盘点击与多显示器贴边未执行，详见[验证记录](../docs/validation/ticket-07.md)。
+**实施结果：** 隐藏便签在保存成功后释放窗口与订阅、按需重建；设置与导入界面关闭即释放；剪贴板收起清空缩略图缓存并作废在途解码；性能条隐藏暂停采样与时钟；停用与退出取消任务并释放数据文件锁。`ToolSuite.LifecycleChecks` 40 条通过，`SuiteChecks`/`Pinto.ModuleChecks`/`Pinto.DesktopChecks` 随语义更新后全量通过；真实托盘点击与多显示器贴边未执行，详见[验证记录](../validation/ticket-07.md)。
 
 **规格：** [工具套件合并规格](../spec.md)。主要覆盖用户故事 29、33、40，并覆盖 6–10、24 的资源生命周期。
 

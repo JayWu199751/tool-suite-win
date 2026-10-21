@@ -24,6 +24,7 @@ internal sealed class WpfStartupShellHost : IStartupShellHost, IDisposable
     private readonly WindowsFullscreenWatcher _fullscreen = new();
     private readonly ISettingsStore _store;
     private readonly Action<string> _reportError;
+    private readonly Action? _showSuiteSettings;
     private readonly ITaskbarVisibilityGuardPort _guard;
     private PerformanceSettings _settings = PerformanceSettings.Default;
     private Action? _move;
@@ -32,10 +33,11 @@ internal sealed class WpfStartupShellHost : IStartupShellHost, IDisposable
     private SettingsWindow? _settingsWindow;
     private bool _disposed;
 
-    public WpfStartupShellHost(ISettingsStore store, Action<string> reportError)
+    public WpfStartupShellHost(ISettingsStore store, Action<string> reportError, Action? showSuiteSettings = null)
     {
         _store = store;
         _reportError = reportError;
+        _showSuiteSettings = showSuiteSettings;
         _menuTheme = new ShellContextMenuTheme(_menu, false);
         var nativeGuard = new WindowsTaskbarVisibilityGuard(() => !_disposed && _bar is { IsLoaded: true } ? _bar.RootWindowHandle : nint.Zero);
         _guard = new DispatcherGuard(nativeGuard, _dispatcher, () => !_disposed);
@@ -109,6 +111,7 @@ internal sealed class WpfStartupShellHost : IStartupShellHost, IDisposable
     public void ShowSettingsWindow() => throw new InvalidOperationException("设置窗需要模块配置入口。");
     public void ShowSettingsWindow(PerformanceSettings settings, Func<SettingsPatch, PerformanceSettings> update, bool recovered)
     {
+        if (_showSuiteSettings is not null) { _showSuiteSettings(); return; }
         if (_settingsWindow is null)
         {
             _settingsWindow = new SettingsWindow(settings, update, recovered, listenForSystemTheme: false);

@@ -49,30 +49,30 @@ public sealed class PerformanceBarViewModel : INotifyPropertyChanged
     private bool _hasCpuTemperature;
     private bool _hasNetworkDownload;
     private bool _hasNetworkUpload;
-    // 视觉令牌取自 docs/UI/preview.html（深色为原值，亮色为推导值）；字号与间距体系维持原规格。
-    private Brush _backgroundBrush = CreateBrush(Color.FromArgb(0xF5, 0x12, 0x15, 0x19));
-    private Brush _foregroundBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
-    private Brush _labelBrush = CreateBrush(Color.FromRgb(0x92, 0x97, 0x9F));
-    private Brush _temperatureBrush = CreateBrush(Color.FromRgb(0x9D, 0xA2, 0xA9));
-    private Brush _missingBrush = CreateBrush(Color.FromArgb(0x52, 0xF3, 0xF5, 0xF7));
-    private Brush _borderBrush = CreateBrush(Color.FromArgb(0x1A, 0xFF, 0xFF, 0xFF));
-    private Brush _dividerBrush = CreateBrush(Color.FromArgb(0x21, 0xFF, 0xFF, 0xFF));
-    private Brush _hoverBrush = CreateBrush(Color.FromArgb(0x06, 0xFF, 0xFF, 0xFF));
+    // 视觉令牌取自 docs/UI Design/Apple Dark.md（暗为原值，亮为推导值）；字号与间距体系维持原规格。
+    private Brush _backgroundBrush = CreateBrush(Color.FromArgb(0xF5, 0x0B, 0x0B, 0x0E));
+    private Brush _foregroundBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _labelBrush = CreateBrush(Color.FromRgb(0xA0, 0xA0, 0xAC));
+    private Brush _temperatureBrush = CreateBrush(Color.FromRgb(0x7E, 0x7E, 0x8A));
+    private Brush _missingBrush = CreateBrush(Color.FromArgb(0x52, 0xF2, 0xF2, 0xF5));
+    private Brush _borderBrush = CreateBrush(Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF));
+    private Brush _dividerBrush = CreateBrush(Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF));
+    private Brush _hoverBrush = CreateBrush(Color.FromArgb(0x17, 0xFF, 0xFF, 0xFF));
     private DropShadowEffect? _shadowEffect;
-    private Brush _downloadTokenBrush = CreateBrush(Color.FromRgb(0x27, 0xAA, 0xFF));
-    private Brush _uploadTokenBrush = CreateBrush(Color.FromRgb(0x49, 0xDC, 0x8B));
-    private Brush _cpuPercentageBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
-    private Brush _memoryPercentageBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
-    private Brush _gpuPercentageBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
-    private Brush _gpuMemoryPercentageBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
-    private Brush _gpuTemperatureBrush = CreateBrush(Color.FromRgb(0x9D, 0xA2, 0xA9));
-    private Brush _cpuTemperatureBrush = CreateBrush(Color.FromRgb(0x9D, 0xA2, 0xA9));
-    private Brush _networkDownloadBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
-    private Brush _networkUploadBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
-    private Brush _networkDownloadArrowBrush = CreateBrush(Color.FromRgb(0x27, 0xAA, 0xFF));
-    private Brush _networkUploadArrowBrush = CreateBrush(Color.FromRgb(0x49, 0xDC, 0x8B));
-    private Brush _networkDownloadUnitBrush = CreateBrush(Color.FromRgb(0x92, 0x97, 0x9F));
-    private Brush _networkUploadUnitBrush = CreateBrush(Color.FromRgb(0x92, 0x97, 0x9F));
+    private Brush _downloadTokenBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _uploadTokenBrush = CreateBrush(Color.FromRgb(0xA0, 0xA0, 0xAC));
+    private Brush _cpuPercentageBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _memoryPercentageBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _gpuPercentageBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _gpuMemoryPercentageBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _gpuTemperatureBrush = CreateBrush(Color.FromRgb(0x7E, 0x7E, 0x8A));
+    private Brush _cpuTemperatureBrush = CreateBrush(Color.FromRgb(0x7E, 0x7E, 0x8A));
+    private Brush _networkDownloadBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _networkUploadBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _networkDownloadArrowBrush = CreateBrush(Color.FromRgb(0xF2, 0xF2, 0xF5));
+    private Brush _networkUploadArrowBrush = CreateBrush(Color.FromRgb(0xA0, 0xA0, 0xAC));
+    private Brush _networkDownloadUnitBrush = CreateBrush(Color.FromRgb(0xA0, 0xA0, 0xAC));
+    private Brush _networkUploadUnitBrush = CreateBrush(Color.FromRgb(0xA0, 0xA0, 0xAC));
 
     public PerformanceBarViewModel(bool listenForSystemTheme = true)
     {
@@ -326,30 +326,31 @@ public sealed class PerformanceBarViewModel : INotifyPropertyChanged
     {
         var dark = IsDarkEffectiveTheme(_settings.Theme);
         var hide = _settings.TransparentDisplay;
-        // 视觉规范：暗色纯黑画布、亮色纯白画布，层级只靠描边与色差（不使用投影）。
+        // 视觉规范：暗色近黑画布 #0B0B0E、亮色纯白画布，层级只靠描边与色差（不使用投影）。
         var background = dark
-            ? Color.FromRgb(0x00, 0x00, 0x00)
+            ? Color.FromRgb(0x0B, 0x0B, 0x0E)
             : Color.FromRgb(0xFF, 0xFF, 0xFF);
         // 透明显示把背景降到 alpha=1 而不是 0：分层窗口中 alpha=0 像素被系统穿透，
         // 命中区必须留在卡片本身；装饰（描边/分隔/hover/高光/投影）则全部归零隐藏。
         var backgroundAlpha = hide ? (byte)1 : (byte)Math.Round(_settings.Opacity * byte.MaxValue);
         BackgroundBrush = CreateBrush(Color.FromArgb(backgroundAlpha, background.R, background.G, background.B));
 
-        var foreground = dark ? Color.FromRgb(0xF5, 0xF5, 0xF7) : Color.FromRgb(0x1D, 0x1D, 0x1F);
+        var foreground = dark ? Color.FromRgb(0xF2, 0xF2, 0xF5) : Color.FromRgb(0x1D, 0x1D, 0x1F);
         ForegroundBrush = CreateBrush(foreground);
         MissingBrush = CreateBrush(Color.FromArgb(0x52, foreground.R, foreground.G, foreground.B));
-        LabelBrush = CreateBrush(dark ? Color.FromRgb(0x86, 0x86, 0x8B) : Color.FromRgb(0x63, 0x63, 0x6A));
-        TemperatureBrush = CreateBrush(dark ? Color.FromRgb(0xA1, 0xA1, 0xA6) : Color.FromRgb(0x75, 0x75, 0x7A));
-        // 参考稿把彩色收束为单一蓝色，读数只用中性层次；方向靠 ↓/↑ 字符区分。
+        LabelBrush = CreateBrush(dark ? Color.FromRgb(0xA0, 0xA0, 0xAC) : Color.FromRgb(0x63, 0x63, 0x6A));
+        TemperatureBrush = CreateBrush(dark ? Color.FromRgb(0x7E, 0x7E, 0x8A) : Color.FromRgb(0x75, 0x75, 0x7A));
+        // 参考稿把彩色收束为单一色族，读数只用中性层次；方向靠 ↓/↑ 字符区分。
         _downloadTokenBrush = CreateBrush(foreground);
-        _uploadTokenBrush = CreateBrush(dark ? Color.FromRgb(0x86, 0x86, 0x8B) : Color.FromRgb(0x63, 0x63, 0x6A));
+        _uploadTokenBrush = CreateBrush(dark ? Color.FromRgb(0xA0, 0xA0, 0xAC) : Color.FromRgb(0x63, 0x63, 0x6A));
 
+        // 描边与分隔沿用参考稿的 alpha 口径：外框 12% 白，分隔与 hover 分别为 6% / 9% 白。
         BorderBrush = CreateBrush(WithHiddenAlpha(
-            dark ? Color.FromRgb(0x33, 0x33, 0x36) : Color.FromRgb(0xD6, 0xD6, 0xD6), hide));
+            dark ? Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF) : Color.FromRgb(0xD6, 0xD6, 0xD6), hide));
         DividerBrush = CreateBrush(WithHiddenAlpha(
-            dark ? Color.FromRgb(0x2A, 0x2A, 0x2C) : Color.FromRgb(0xE8, 0xE8, 0xED), hide));
+            dark ? Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF) : Color.FromRgb(0xE8, 0xE8, 0xED), hide));
         HoverBrush = CreateBrush(WithHiddenAlpha(
-            dark ? Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x0A, 0x00, 0x00, 0x00), hide));
+            dark ? Color.FromArgb(0x17, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x0A, 0x00, 0x00, 0x00), hide));
         // 零投影：参考稿用色差与圆角表达层级，投影一律关闭。
         ShadowEffect = null;
         UpdateReadingBrushes();

@@ -122,7 +122,7 @@ internal sealed class SuiteApplication : Application
     }
     protected override void OnExit(ExitEventArgs e)
     {
-        theme?.Dispose(); tray?.Dispose();
+        settings?.Dispose(); theme?.Dispose(); tray?.Dispose();
         base.OnExit(e);
     }
     private async Task VerifyAsync()

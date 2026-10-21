@@ -20,7 +20,7 @@
 
 从开始菜单启动“工具套件”并在 UAC 中允许（正式 EXE 要求管理员权限）。首次启动同时启用三个工具：
 性能条显示、便签建立一张空白便签、剪贴板按 `Ctrl+Shift+V` 呼出。托盘左键与双击无动作，
-右键按工具分组管理，`统一设置` 里可改主题、启停工具与开启开机启动（默认关闭）。
+右键按工具分组管理，`统一设置` 顶部管理主题与开机启动（默认关闭），下方按剪贴板、性能条、便签独立展开配置。
 卸载只删除程序与套件自启值，保留 `%LOCALAPPDATA%\ToolSuite` 用户数据。
 
 操作步骤、升级/卸载、UAC 行为、便签导入导出与人工验收清单见[交付说明](docs/handoff.md)。
@@ -77,7 +77,7 @@ tests/ToolSuite.LifecycleChecks 隐藏界面回收与重复重建检查
 tests/ToolSuite.InstallerChecks 开机启动与安装器隔离检查
 tools/ToolSuite.Installer      单文件安装器与其核心逻辑
 scripts                        build-installer.ps1 / verify-host.ps1 / verify-installer.ps1
-docs                           交付说明、模块契约、ADR、逐工单验证记录
+docs                           文档索引、工单、交付说明、模块契约、ADR、验证记录与历史归档
 artifacts/                     构建、发布、安装包与隔离检查产物（不入库）
 ```
 
@@ -94,10 +94,12 @@ artifacts/                     构建、发布、安装包与隔离检查产物�
 
 ## 文档
 
+- [文档索引](docs/README.md)：当前维护文档与历史归档的入口。
+- [统一设置页面](docs/unified-settings.md)：入口合并、工具分类、保存行为与界面设计。
 - [交付说明](docs/handoff.md)：安装/升级/卸载、权限、托盘、快捷键、启停、便签备份、主题、自启、内存观察。
 - [模块接入约定](docs/module-integration.md)
-- [正式规格](spec.md)：产品行为、实现决定、功能测试和范围边界。
-- [工单索引与依赖图](tickets/README.md)
+- [正式规格](docs/spec.md)：产品行为、实现决定、功能测试和范围边界。
+- [工单索引与依赖图](docs/tickets/README.md)
 - [术语表](GLOSSARY.md)
 - [ADR-0002：一个管理员权限 WPF 宿主](docs/adr/0002-single-elevated-wpf-host.md)
 - [ADR-0003：独立数据并从空白开始](docs/adr/0003-independent-fresh-data.md)
@@ -105,4 +107,12 @@ artifacts/                     构建、发布、安装包与隔离检查产物�
 - 逐工单验证：[01](docs/validation/ticket-01.md)、[03](docs/validation/ticket-03.md)、
   [06](docs/validation/ticket-06.md)、[07](docs/validation/ticket-07.md)、
   [08](docs/validation/ticket-08.md)、[09](docs/validation/ticket-09.md)
-- 背景：[讨论记录](discussion.md)、[方案摘要](plan.md)、[工单拆分记录](ticket-breakdown.md)。
+- 历史背景：[讨论记录](docs/archive/discussion.md)、[方案摘要](docs/archive/plan.md)、[工单拆分记录](docs/archive/ticket-breakdown.md)。
+
+## 本地文件约定
+
+- 构建、发布、安装包、测试隔离数据和临时诊断产物统一放在 `artifacts/`，不提交到 Git。
+- `bin/`、`obj/`、`TestResults/` 为可再生成的检查产物；`.packages/`、`.dotnet/` 是本地依赖与 CLI 缓存。
+- `.workbuddy/`、`.workbuddy-ai/`、`.scratch/` 与个人 IDE 状态只保留在本地。
+- `.env` 及其环境变体不入库；需要共享配置结构时提交 `.env.example`、`.env.sample` 或 `.env.template`。
+- 当前规格位于 `docs/spec.md`，项目共享术语表保留在根目录 `GLOSSARY.md`；已完成阶段的讨论与规划保存在 `docs/archive/`，最新状态以工单与验证记录为准。

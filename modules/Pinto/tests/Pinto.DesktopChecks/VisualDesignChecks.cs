@@ -39,10 +39,15 @@ internal static class VisualDesignChecks
             {
                 coordinator.SetTheme(preference);
                 var label = preference.ToString();
+                // 暗色的悬停与描边是 alpha 淡染（9% / 6% 白），先按表面底色合成再算对比度。
+                var canvas = Brush("SurfaceBrush").Color;
                 check($"{label}：正文、辅助及完成文字在表面、输入与悬停色上均达到 4.5:1",
                     new[] { "TextBrush", "SecondaryBrush", "CompletedBrush" }.All(foreground =>
-                        new[] { "SurfaceBrush", "InputBrush", "HoverBrush" }.All(background => Contrast(Brush(foreground).Color, Brush(background).Color) >= 4.5)));
-                check($"{label}：未完成圆圈及焦点环达到 3:1", Contrast(Brush("CircleBrush").Color, Brush("SurfaceBrush").Color) >= 3 && Contrast(Brush("FocusBrush").Color, Brush("InputBrush").Color) >= 3);
+                        new[] { "SurfaceBrush", "InputBrush", "HoverBrush" }.All(background =>
+                            Contrast(Over(Brush(foreground).Color, canvas), Over(Brush(background).Color, canvas)) >= 4.5)));
+                check($"{label}：未完成圆圈及焦点环达到 3:1",
+                    Contrast(Over(Brush("CircleBrush").Color, canvas), canvas) >= 3 &&
+                    Contrast(Over(Brush("FocusBrush").Color, Brush("InputBrush").Color), Brush("InputBrush").Color) >= 3);
                 check($"{label}：五种强调色与勾形均达到 3:1", Enum.GetValues<AccentColor>().All(accent =>
                 {
                     var fill = ThemeService.GetAccentBrush(accent).Color;
@@ -81,6 +86,19 @@ internal static class VisualDesignChecks
                 ThemeService.ApplyTextScale(window.Resources, 1);
                 window.Width = 324; window.Height = 273;
                 await Task.Delay(60);
+                window.UpdateLayout();
+                // 完成圆圈按「首行高度」居中，而不是钉在行顶：多行项与不同字号下都应与首行文字同心。
+                var rows = Descendants<Border>((ItemsControl)window.FindName("ItemsList"))
+                    .Where(element => element.Name == "ItemRow").ToArray();
+                check($"{label}：每个清单项的完成圆圈与首行文字垂直居中",
+                    rows.Length > 0 && rows.All(row =>
+                    {
+                        var circle = Descendants<CheckBox>(row).First();
+                        var text = Descendants<TextBlock>(row).First(block => block.IsVisible && !string.IsNullOrEmpty(block.Text));
+                        var circleCenter = circle.TranslatePoint(new Point(0, circle.ActualHeight / 2), window).Y;
+                        var lineCenter = text.TranslatePoint(new Point(0, text.Padding.Top + FirstLineHeight(text) / 2), window).Y;
+                        return Math.Abs(circleCenter - lineCenter) <= 1;
+                    }));
                 window.Activate();
                 var newEditor = (TextBox)window.FindName("NewItemEditor");
                 newEditor.Focus();
@@ -145,6 +163,39 @@ internal static class VisualDesignChecks
 
     private static SolidColorBrush Brush(string key) => (SolidColorBrush)_resourceScope.FindResource(key);
     private static bool Same(Brush actual, SolidColorBrush expected) => actual is SolidColorBrush solid && solid.Color == expected.Color;
+
+    /// <summary>用同字体、同字重的一条探针量单行高度：TextBlock 不公开行盒度量，只能这样取。</summary>
+    private static double FirstLineHeight(TextBlock reference)
+    {
+        var probe = new TextBlock
+        {
+            Text = "Hg",
+            FontFamily = reference.FontFamily,
+            FontSize = reference.FontSize,
+            FontWeight = reference.FontWeight,
+            FontStretch = reference.FontStretch,
+            FontStyle = reference.FontStyle,
+        };
+        probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return probe.DesiredSize.Height;
+    }
+
+    /// <summary>把可能是 alpha 淡染的画刷按底色合成为不透明色；不合成会把 9% 白当成纯白。</summary>
+    private static Color Over(Color top, Color bottom)
+    {
+        if (top.A == 0xFF)
+        {
+            return top;
+        }
+
+        var alpha = top.A / 255d;
+        static byte Mix(byte upper, byte lower, double weight) => (byte)Math.Round(upper * weight + lower * (1 - weight));
+        return Color.FromRgb(
+            Mix(top.R, bottom.R, alpha),
+            Mix(top.G, bottom.G, alpha),
+            Mix(top.B, bottom.B, alpha));
+    }
+
     private static double Contrast(Color first, Color second)
     {
         var a = Luminance(first); var b = Luminance(second);

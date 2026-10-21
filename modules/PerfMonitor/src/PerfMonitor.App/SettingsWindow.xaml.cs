@@ -19,12 +19,16 @@ namespace PerfMonitor.App;
 
 public partial class SettingsWindow : Window
 {
+    private const double SuiteWindowHeight = 720;
+    private bool _usesSuiteLayout;
     private static readonly TimeSpan SavedMessageDuration = TimeSpan.FromSeconds(2);
     private readonly Func<SettingsPatch, PerformanceSettings> _updateSettings;
     private readonly DispatcherTimer _savedMessageTimer;
     private PerformanceSettings _currentSettings;
     private bool _isSynchronizingControls = true;
     private bool _isListeningForThemeChanges;
+    /// <summary>当前有效外观：状态文字的成功/错误色需随明暗取参考稿的两套取值。</summary>
+    private bool _isDark;
     private readonly bool _listenForSystemTheme;
     /// <summary>由套件托管时，主题与开机自启只有套件一个权威：两行隐藏，控件不回写这两个字段。</summary>
     private readonly bool _suiteManaged;
@@ -116,6 +120,8 @@ public partial class SettingsWindow : Window
         {
             "Autostart" => new SettingsPatch { Autostart = enabled },
             "AutoHideOnFullscreen" => new SettingsPatch { AutoHideOnFullscreen = enabled },
+            "CenterInTaskbarRow" => new SettingsPatch { CenterInTaskbarRow = enabled },
+            "TransparentDisplay" => new SettingsPatch { TransparentDisplay = enabled },
             _ => null
         };
         if (patch is not null)
@@ -194,7 +200,9 @@ public partial class SettingsWindow : Window
         catch (Exception exception)
         {
             ResynchronizeControls();
-            ShowStatus("保存失败", isError: true, persistent: false);
+            var reason = exception is System.IO.IOException or UnauthorizedAccessException
+                ? "无法写入配置文件，请检查文件占用或访问权限。" : exception.Message;
+            ShowStatus("保存失败：" + reason, isError: true, persistent: true);
             System.Diagnostics.Trace.WriteLine($"保存设置失败：{exception}");
         }
     }
@@ -217,6 +225,8 @@ public partial class SettingsWindow : Window
         TimeToggle.IsChecked = settings.Metrics.Time;
         AutostartToggle.IsChecked = settings.Autostart;
         FullscreenAutoHideToggle.IsChecked = settings.AutoHideOnFullscreen;
+        CenterInTaskbarRowToggle.IsChecked = settings.CenterInTaskbarRow;
+        TransparentDisplayToggle.IsChecked = settings.TransparentDisplay;
         FastRefreshComboBox.SelectedValue = settings.FastRefreshMilliseconds.ToString(CultureInfo.InvariantCulture);
         SlowRefreshComboBox.SelectedValue = settings.SlowRefreshMilliseconds.ToString(CultureInfo.InvariantCulture);
         ThemeComboBox.SelectedValue = settings.Theme.ToString();
@@ -229,37 +239,61 @@ public partial class SettingsWindow : Window
     private void ApplyTheme(BarTheme theme)
     {
         var dark = PerformanceBarViewModel.IsDarkEffectiveTheme(theme);
-        // 取值见 docs/design-system.md：纯黑/浅灰画布 + 白/炭黑卡片，单一蓝色用于开关与焦点。
+        _isDark = dark;
+        // 取值见 docs/UI Design/Apple Dark.md（暗）与 Apple Light.md（亮）：
+        // 近黑/浅灰画布 + 炭黑/白卡片；描边、分隔与悬停沿用参考稿的 alpha 白；强调只用一个色族。
         Resources["PageBackgroundBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x00, 0x00, 0x00) : Color.FromRgb(0xF5, 0xF5, 0xF7));
+            dark ? Color.FromRgb(0x0B, 0x0B, 0x0E) : Color.FromRgb(0xF5, 0xF5, 0xF7));
         Resources["SurfaceBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x1D, 0x1D, 0x1F) : Color.FromRgb(0xFF, 0xFF, 0xFF));
+            dark ? Color.FromRgb(0x14, 0x14, 0x19) : Color.FromRgb(0xFF, 0xFF, 0xFF));
         Resources["PrimaryTextBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0xF5, 0xF5, 0xF7) : Color.FromRgb(0x1D, 0x1D, 0x1F));
+            dark ? Color.FromRgb(0xF2, 0xF2, 0xF5) : Color.FromRgb(0x1D, 0x1D, 0x1F));
         Resources["SecondaryTextBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x86, 0x86, 0x8B) : Color.FromRgb(0x63, 0x63, 0x6A));
-        Resources["AccentBrush"] = CreateBrush(Color.FromRgb(0x00, 0x71, 0xE3));
+            dark ? Color.FromRgb(0xA0, 0xA0, 0xAC) : Color.FromRgb(0x63, 0x63, 0x6A));
+        Resources["AccentBrush"] = CreateBrush(
+            dark ? Color.FromRgb(0x7B, 0x77, 0xE0) : Color.FromRgb(0x00, 0x71, 0xE3));
         Resources["ControlBackgroundBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x2A, 0x2A, 0x2C) : Color.FromRgb(0xF5, 0xF5, 0xF7));
+            dark ? Color.FromRgb(0x15, 0x15, 0x1A) : Color.FromRgb(0xF5, 0xF5, 0xF7));
         Resources["SwitchTrackBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x3A, 0x3A, 0x3D) : Color.FromRgb(0xE8, 0xE8, 0xED));
+            dark ? Color.FromArgb(0x17, 0xFF, 0xFF, 0xFF) : Color.FromRgb(0xE8, 0xE8, 0xED));
         Resources["DividerBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x33, 0x33, 0x36) : Color.FromRgb(0xE8, 0xE8, 0xED));
+            dark ? Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF) : Color.FromRgb(0xE8, 0xE8, 0xED));
         Resources["HoverBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x2A, 0x2A, 0x2C) : Color.FromRgb(0xF5, 0xF5, 0xF7));
-        Resources["ThumbBrush"] = CreateBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
+            dark ? Color.FromArgb(0x17, 0xFF, 0xFF, 0xFF) : Color.FromRgb(0xF5, 0xF5, 0xF7));
+        Resources["ThumbBrush"] = CreateBrush(
+            dark ? Color.FromRgb(0xF2, 0xF2, 0xF5) : Color.FromRgb(0xFF, 0xFF, 0xFF));
+        if (SystemParameters.HighContrast)
+        {
+            foreach (var key in new[] { "PageBackgroundBrush", "SurfaceBrush", "ControlBackgroundBrush", "ThumbBrush" })
+                Resources[key] = SystemColors.WindowBrush;
+            foreach (var key in new[] { "PrimaryTextBrush", "SecondaryTextBrush", "DividerBrush" })
+                Resources[key] = SystemColors.WindowTextBrush;
+            Resources["AccentBrush"] = SystemColors.HighlightBrush;
+            Resources["SwitchTrackBrush"] = SystemColors.ControlDarkBrush;
+            Resources["HoverBrush"] = SystemColors.ControlBrush;
+        }
     }
 
     /// <summary>
     /// 按窗口当前所在显示器的工作区重新约束最大高度（DIP）；
-    /// 跨屏移动、工作区变化时重新计算。内容自适应高度，超出即由内容区滚动。
+    /// 跨屏移动、工作区变化时重新计算。统一设置固定高度，超出即由内容区滚动。
     /// </summary>
     private void UpdateMaxHeightForCurrentScreen()
     {
         var workAreaHeight = TryGetMonitorWorkAreaHeight(out var monitorWorkAreaHeight)
             ? monitorWorkAreaHeight
             : SystemParameters.WorkArea.Height;
-        MaxHeight = SettingsWindowSizingRules.ResolveMaxWindowHeight(workAreaHeight);
+        var maximum = SettingsWindowSizingRules.ResolveMaxWindowHeight(workAreaHeight);
+        if (_usesSuiteLayout)
+        {
+            var height = Math.Min(SuiteWindowHeight, maximum);
+            // 先放宽旧下限再调整上限，兼容从大屏移到较小工作区。
+            MinHeight = Math.Min(MinHeight, height);
+            MaxHeight = height;
+            MinHeight = height;
+            Height = height;
+        }
+        else MaxHeight = maximum;
     }
 
     /// <summary>读取窗口所在显示器工作区高度并换算为 DIP；失败时返回 false 走主屏回退。</summary>
@@ -323,7 +357,11 @@ public partial class SettingsWindow : Window
     {
         _savedMessageTimer.Stop();
         SaveStatusText.Text = message;
-        SaveStatusText.Foreground = CreateBrush(isError ? Color.FromRgb(0xC7, 0x26, 0x1F) : Color.FromRgb(0x1D, 0x83, 0x48));
+        // 状态色两套取值：暗色用 #57C08A / #E05A52，亮色用 #1D8348 / #C7261F（均为参考稿的原值）。
+        SaveStatusText.Foreground = CreateBrush(isError
+            ? (_isDark ? Color.FromRgb(0xE0, 0x5A, 0x52) : Color.FromRgb(0xC7, 0x26, 0x1F))
+            : (_isDark ? Color.FromRgb(0x57, 0xC0, 0x8A) : Color.FromRgb(0x1D, 0x83, 0x48)));
+        if (SystemParameters.HighContrast) SaveStatusText.Foreground = SystemColors.WindowTextBrush;
         if (!persistent)
         {
             _savedMessageTimer.Start();
@@ -379,9 +417,9 @@ public partial class SettingsWindow : Window
             UpdateMaxHeightForCurrentScreen();
         }
 
-        if (_currentSettings.Theme == BarTheme.System)
+        if (e.PropertyName == nameof(SystemParameters.HighContrast) || _currentSettings.Theme == BarTheme.System)
         {
-            ApplyTheme(BarTheme.System);
+            ApplyTheme(_currentSettings.Theme);
         }
     }
 
@@ -424,4 +462,33 @@ public partial class SettingsWindow : Window
     }
 
     private void CloseWindowButton_OnClick(object sender, RoutedEventArgs e) => Close();
+
+    /// <summary>宿主在原窗口内重排已有控件，事件、保存反馈和 DPI 约束仍由此窗口维护。</summary>
+    public StackPanel DetachSettingsContent()
+    {
+        SettingsScroll.Content = null;
+        SettingsBody.Margin = new Thickness(0);
+        foreach (var card in SettingsBody.Children.OfType<Border>())
+        {
+            card.Padding = new Thickness(0);
+            card.Background = null;
+            card.Margin = new Thickness(0, 0, 0, 16);
+        }
+        return SettingsBody;
+    }
+
+    public void UseSuiteContent(UIElement content)
+    {
+        _usesSuiteLayout = true;
+        SizeToContent = SizeToContent.Manual;
+        Title = "工具套件设置";
+        WindowHeading.Text = "工具套件";
+        WindowDescription.Text = "通用偏好与三个工具的设置";
+        Width = 380;
+        MinWidth = 380;
+        MaxWidth = 380;
+        ResizeMode = ResizeMode.NoResize;
+        SettingsScroll.Content = content;
+        UpdateMaxHeightForCurrentScreen();
+    }
 }

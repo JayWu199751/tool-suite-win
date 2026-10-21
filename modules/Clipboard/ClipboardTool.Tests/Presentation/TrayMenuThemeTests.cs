@@ -20,7 +20,7 @@ public class TrayMenuThemeTests
     }
 
     [Theory]
-    [InlineData("Dark", "#FF1D1D1F", "#FFF5F5F7")]
+    [InlineData("Dark", "#FF141419", "#FFF2F2F5")]
     [InlineData("Light", "#FFFFFFFF", "#FF1D1D1F")]
     public void 实际托盘菜单与主题子菜单背景文字匹配应用皮肤(string theme, string background, string foreground)
     {
@@ -49,7 +49,7 @@ public class TrayMenuThemeTests
             using var menu = new TrayContextMenu(resources);
             menu.SetItems(Spec(), _ => { });
             Prepare(menu);
-            AssertColor("#FF1D1D1F", menu.Background);
+            AssertColor("#FF141419", menu.Background);
             resources.MergedDictionaries[0] = ThemeDictionary("Light");
             Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             AssertColor("#FFFFFFFF", menu.Background);
@@ -72,7 +72,7 @@ public class TrayMenuThemeTests
             Assert.False(theme.IsTrayDark);
             using var menu = CreateMenu(theme.IsPanelDark ? "Dark" : "Light");
             Prepare(menu);
-            AssertColor("#FF1D1D1F", menu.Background);
+            AssertColor("#FF141419", menu.Background);
         });
     }
 

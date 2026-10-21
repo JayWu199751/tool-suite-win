@@ -362,8 +362,10 @@ public sealed class PerformanceBarPlacementContractTests
         Assert.Equal(DockedEdges.Left, store.LastSaved!.Widget.Docked);
     }
 
-    [Fact(DisplayName = "开启行内居中立即结算一次并弹回整行水平中心")]
-    public void Enabling_row_centering_settles_once_back_to_the_row_center()
+    [Theory(DisplayName = "菜单或设置页开启行内居中均立即弹回整行水平中心")]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Enabling_row_centering_settles_once_back_to_the_row_center(bool fromMenu)
     {
         var store = new RecordingPlacementStore(BottomDockedSettings());
         var displays = new FakeDisplaySource([BottomTaskbarDisplay]);
@@ -375,7 +377,8 @@ public sealed class PerformanceBarPlacementContractTests
         shell.Start();
         host.PlacementPort.Frame = new PlacementRect(100, 1050, 200, 40);
 
-        shell.SelectMenuItem(ShellMenuAction.ToggleCenterInTaskbarRow);
+        if (fromMenu) shell.SelectMenuItem(ShellMenuAction.ToggleCenterInTaskbarRow);
+        else shell.UpdateSettings(new SettingsPatch { CenterInTaskbarRow = true });
 
         Assert.True(shell.Settings.CenterInTaskbarRow);
         Assert.Equal((860d, 1040d), host.PlacementPort.LastSetPosition);

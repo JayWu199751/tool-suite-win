@@ -6,7 +6,7 @@
 
 **Status:** resolved
 
-**实施结果：** 用最终源码重建安装包（`artifacts/installer/ToolSuite-Setup-1.0.0.exe`，120.1 MB）并完成真实静默安装/卸载冒烟；Release 构建 0 警告 0 错误，Clipboard、PerfMonitor、Pinto 与六个 ToolSuite 检查逐工程执行，除两条 `WindowSummonOrderTests` 桌面 z 序用例因无交互桌面失败外全部通过。新增 [交付说明](../docs/handoff.md) 并更新 README；未执行的人工场景与复验步骤见[验证记录](../docs/validation/ticket-09.md)。
+**实施结果：** 用最终源码重建安装包（`artifacts/installer/ToolSuite-Setup-1.0.0.exe`，120.1 MB）并完成真实静默安装/卸载冒烟；Release 构建 0 警告 0 错误，Clipboard、PerfMonitor、Pinto 与六个 ToolSuite 检查逐工程执行，除两条 `WindowSummonOrderTests` 桌面 z 序用例因无交互桌面失败外全部通过。新增 [交付说明](../handoff.md) 并更新 README；未执行的人工场景与复验步骤见[验证记录](../validation/ticket-09.md)。
 
 **规格：** [工具套件合并规格](../spec.md)。覆盖全部用户故事的最终整合交付；各前置工单已经包含对应功能测试。
 

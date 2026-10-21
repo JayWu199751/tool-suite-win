@@ -50,13 +50,15 @@ public partial class ShellContextMenuTheme : ResourceDictionary
 
         _dark = dark;
         _applied = true;
-        _menu.Resources[BackgroundKey] = Brush(dark ? 0xFF1D1D1FL : 0xFFFFFFFFL);
-        _menu.Resources[ForegroundKey] = Brush(dark ? 0xFFF5F5F7L : 0xFF1D1D1FL);
-        _menu.Resources[SecondaryKey] = Brush(dark ? 0xFF86868BL : 0xFF63636AL);
-        _menu.Resources[CheckKey] = Brush(0xFF0071E3L);
-        _menu.Resources[HoverKey] = Brush(dark ? 0x0FFFFFFFL : 0x0A000000L);
-        _menu.Resources[BorderKey] = Brush(dark ? 0xFF333336L : 0xFFD6D6D6L);
-        _menu.Resources[DividerKey] = Brush(dark ? 0xFF2A2A2CL : 0xFFE8E8EDL);
+        // 暗色取 docs/UI Design/Apple Dark.md：炭黑浮层 + 12% 白描边 + 9% 白悬停 + 6% 白发丝分隔；
+        // 勾选与强调只用靛蓝。亮色保持原取值。
+        _menu.Resources[BackgroundKey] = Brush(dark ? 0xFF141419L : 0xFFFFFFFFL);
+        _menu.Resources[ForegroundKey] = Brush(dark ? 0xFFF2F2F5L : 0xFF1D1D1FL);
+        _menu.Resources[SecondaryKey] = Brush(dark ? 0xFFA0A0ACL : 0xFF63636AL);
+        _menu.Resources[CheckKey] = Brush(dark ? 0xFF7B77E0L : 0xFF0071E3L);
+        _menu.Resources[HoverKey] = Brush(dark ? 0x17FFFFFFL : 0x0A000000L);
+        _menu.Resources[BorderKey] = Brush(dark ? 0x1AFFFFFFL : 0xFFD6D6D6L);
+        _menu.Resources[DividerKey] = Brush(dark ? 0x0FFFFFFFL : 0xFFE8E8EDL);
     }
 
     /// <summary>勾选行与动作项用正文色，未勾的 checkable 行用标签色。</summary>

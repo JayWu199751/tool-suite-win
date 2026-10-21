@@ -2,18 +2,18 @@
 
 正式规格：[工具套件合并规格](../spec.md)。发布日期：2026-10-21。九项工单已全部实施完毕，
 状态均为 `resolved`，各工单顶部的“实施结果”记录实际产出与检查入口；
-最终整套回归、安装包冒烟与交付说明见[工单 09 验证](../docs/validation/ticket-09.md)与[交付说明](../docs/handoff.md)。
+最终整套回归、安装包冒烟与交付说明见[工单 09 验证](../validation/ticket-09.md)与[交付说明](../handoff.md)。
 
 `resolved` 表示实现与已验证的自动检查已落地，验证文档中逐项标注的人工场景（真实 UAC、登录自启、
 多显示器/DPI、硬件缺失等）**未执行即不视为通过**，复验步骤见对应验证文档。后续修改须重跑受影响工单
 列出的检查入口，不能用本索引的完成状态替代实际证据。
 
 合并后的代码审查修复（安装器事务回滚、性能条设置托管、剪贴板高对比度、版本与标识单一真源等）
-已并入实现，逐项判定与证据见[审查修复记录](../docs/validation/code-review-fixes.md)；受影响的
+已并入实现，逐项判定与证据见[审查修复记录](../validation/code-review-fixes.md)；受影响的
 工单 03、04、06、08 顶部“实施结果”已同步检查数字与行为变化。
 
 后续的视觉重构（按 `docs/UI Design` 的 Apple 亮暗参考稿重建全部可视窗口）落地映射见
-[视觉规范](../docs/design-system.md)，改动覆盖工单 02～08 的全部界面，检查入口不变：
+[视觉规范](../design-system.md)，改动覆盖工单 02～08 的全部界面，检查入口不变：
 剪贴板 `ClipboardTool.Tests` + `ToolSuite.ClipboardChecks`、性能 `PerfMonitor.*.Tests`、
 便签 `Pinto.*Checks`、宿主 `ToolSuite.SuiteChecks`/`LifecycleChecks`、安装器 `ToolSuite.InstallerChecks`。
 

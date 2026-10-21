@@ -76,8 +76,8 @@
         </Style>
 
         <Style x:Key="SettingsSwitchStyle" TargetType="ToggleButton">
-            <Setter Property="Width" Value="40" />
-            <Setter Property="Height" Value="24" />
+            <Setter Property="Width" Value="48" />
+            <Setter Property="Height" Value="32" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Background" Value="Transparent" />
@@ -85,6 +85,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
+                        <Grid Background="Transparent">
                         <Border x:Name="Track"
                                 Width="40" Height="24" CornerRadius="12"
                                 Background="{DynamicResource SwitchTrackBrush}"
@@ -97,30 +98,11 @@
                                      HorizontalAlignment="Left" VerticalAlignment="Center"
                                      Fill="{DynamicResource ThumbBrush}" />
                         </Border>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentBrush}" />
                                 <Setter TargetName="Thumb" Property="Margin" Value="18,2,2,2" />
-                                <Trigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ThicknessAnimation Storyboard.TargetName="Thumb"
-                                                                Storyboard.TargetProperty="Margin"
-                                                                From="2,2,2,2" To="18,2,2,2"
-                                                                Duration="0:0:0.2" FillBehavior="Stop" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.EnterActions>
-                                <Trigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <ThicknessAnimation Storyboard.TargetName="Thumb"
-                                                                Storyboard.TargetProperty="Margin"
-                                                                From="18,2,2,2" To="2,2,2,2"
-                                                                Duration="0:0:0.2" FillBehavior="Stop" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Track" Property="Opacity" Value="0.45" />
@@ -337,8 +319,9 @@
             </Style.Triggers>
         </Style>
 
-        <Style TargetType="ScrollBar">
+        <Style x:Key="SettingsVerticalScrollBarStyle" TargetType="ScrollBar">
             <Setter Property="Width" Value="10" />
+            <Setter Property="MinWidth" Value="0" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
             <Setter Property="Template">
@@ -373,6 +356,31 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource SettingsVerticalScrollBarStyle}" />
+
+        <!-- 滚动条使用内容已有的右侧留白，不通过系统模板的占位列改变内容宽度。 -->
+        <Style x:Key="SettingsScrollStyle" TargetType="ScrollViewer">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollViewer">
+                        <Grid>
+                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                    Content="{TemplateBinding Content}"
+                                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                    CanContentScroll="{TemplateBinding CanContentScroll}"
+                                                    Margin="{TemplateBinding Padding}" />
+                            <ScrollBar x:Name="PART_VerticalScrollBar"
+                                       Style="{StaticResource SettingsVerticalScrollBarStyle}"
+                                       Orientation="Vertical" HorizontalAlignment="Right" Margin="0,0,4,0"
+                                       Maximum="{TemplateBinding ScrollableHeight}"
+                                       ViewportSize="{TemplateBinding ViewportHeight}"
+                                       Value="{Binding VerticalOffset, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay}"
+                                       Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -386,9 +394,9 @@
         <Grid Background="Transparent" MinHeight="76" Margin="24,20,24,8"
               MouseLeftButtonDown="HeaderMouseLeftButtonDown">
             <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="性能小窗" FontSize="21" FontWeight="SemiBold"
+                <TextBlock x:Name="WindowHeading" Text="性能小窗" FontSize="21" FontWeight="SemiBold"
                            Foreground="{DynamicResource PrimaryTextBrush}" />
-                <TextBlock Text="指标、刷新率与外观" FontSize="12" Margin="0,4,0,0"
+                <TextBlock x:Name="WindowDescription" Text="指标、刷新率与外观" FontSize="12" Margin="0,4,0,0"
                            Foreground="{DynamicResource SecondaryTextBrush}" />
             </StackPanel>
             <Button x:Name="CloseWindowButton"
@@ -398,13 +406,14 @@
                     Click="CloseWindowButton_OnClick" />
         </Grid>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="20,0,20,16">
+        <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" Style="{StaticResource SettingsScrollStyle}"
+                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="SettingsBody" Margin="20,0,20,16">
                 <Border Style="{StaticResource GroupCardStyle}">
                 <StackPanel>
                     <TextBlock Text="显示指标" Style="{StaticResource GroupTitleStyle}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <TextBlock Text="CPU 使用率" Style="{StaticResource SettingLabelStyle}" />
                         <ToggleButton x:Name="CpuToggle" Grid.Column="1" Style="{StaticResource SettingsSwitchStyle}"
                                       Tag="Cpu" Checked="MetricChanged" Unchecked="MetricChanged"
@@ -412,7 +421,7 @@
                     </Grid>
                     <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <TextBlock Text="内存" Style="{StaticResource SettingLabelStyle}" />
                         <ToggleButton x:Name="MemoryToggle" Grid.Column="1" Style="{StaticResource SettingsSwitchStyle}"
                                       Tag="Memory" Checked="MetricChanged" Unchecked="MetricChanged"
@@ -420,7 +429,7 @@
                     </Grid>
                     <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="GPU" Style="{StaticResource SettingLabelStyle}" />
                             <TextBlock Text="仅 NVIDIA" FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}"
@@ -432,7 +441,7 @@
                     </Grid>
                     <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <TextBlock Text="网络" Style="{StaticResource SettingLabelStyle}" />
                         <ToggleButton x:Name="NetworkToggle" Grid.Column="1" Style="{StaticResource SettingsSwitchStyle}"
                                       Tag="Network" Checked="MetricChanged" Unchecked="MetricChanged"
@@ -440,7 +449,7 @@
                     </Grid>
                     <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <TextBlock Text="时间" Style="{StaticResource SettingLabelStyle}" />
                         <ToggleButton x:Name="TimeToggle" Grid.Column="1" Style="{StaticResource SettingsSwitchStyle}"
                                       Tag="Time" Checked="MetricChanged" Unchecked="MetricChanged"
@@ -490,7 +499,7 @@
                     </Grid>
                     <Border x:Name="ThemeDivider" Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="132" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="132" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <TextBlock Text="背景不透明度" Style="{StaticResource SettingLabelStyle}" />
                         <Slider x:Name="OpacitySlider" Grid.Column="1" Style="{StaticResource SettingsSliderStyle}"
                                 Minimum="0.20" Maximum="1.00" SmallChange="0.05" LargeChange="0.10"
@@ -501,7 +510,7 @@
                     </Grid>
                     <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="132" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="132" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <TextBlock Text="字体大小" Style="{StaticResource SettingLabelStyle}" />
                         <Slider x:Name="FontSizeSlider" Grid.Column="1" Style="{StaticResource SettingsSliderStyle}"
                                 Minimum="10" Maximum="18" SmallChange="1" LargeChange="2"
@@ -517,7 +526,7 @@
                 <StackPanel>
                     <TextBlock Text="行为" Style="{StaticResource GroupTitleStyle}" />
                     <Grid x:Name="AutostartRow" Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="开机自启" Style="{StaticResource SettingLabelStyle}" />
                             <TextBlock x:Name="AutostartDisabledNote" Text="开发环境不可用" FontSize="11"
@@ -529,16 +538,30 @@
                     </Grid>
                     <Border x:Name="AutostartDivider" Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
                         <TextBlock Text="其他应用全屏时自动隐藏" Style="{StaticResource SettingLabelStyle}" />
                         <ToggleButton x:Name="FullscreenAutoHideToggle" Grid.Column="1" Style="{StaticResource SettingsSwitchStyle}"
                                       Tag="AutoHideOnFullscreen" Checked="BehaviorChanged" Unchecked="BehaviorChanged"
                                       AutomationProperties.Name="其他应用全屏时自动隐藏" />
                     </Grid>
+                    <Grid Style="{StaticResource SettingRowStyle}">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="任务栏内水平居中" Style="{StaticResource SettingLabelStyle}" />
+                        <ToggleButton x:Name="CenterInTaskbarRowToggle" Grid.Column="1" Style="{StaticResource SettingsSwitchStyle}"
+                                      Tag="CenterInTaskbarRow" Checked="BehaviorChanged" Unchecked="BehaviorChanged"
+                                      AutomationProperties.Name="任务栏内水平居中" />
+                    </Grid>
+                    <Grid Style="{StaticResource SettingRowStyle}">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="48" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="透明显示" Style="{StaticResource SettingLabelStyle}" />
+                        <ToggleButton x:Name="TransparentDisplayToggle" Grid.Column="1" Style="{StaticResource SettingsSwitchStyle}"
+                                      Tag="TransparentDisplay" Checked="BehaviorChanged" Unchecked="BehaviorChanged"
+                                      AutomationProperties.Name="透明显示" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
-            <TextBlock x:Name="SaveStatusText" Margin="4,2,0,0" HorizontalAlignment="Left"
+            <TextBlock x:Name="SaveStatusText" TextWrapping="Wrap" Margin="4,2,0,0" HorizontalAlignment="Left"
                        Foreground="{DynamicResource AccentBrush}" FontSize="12" />
             </StackPanel>
         </ScrollViewer>

@@ -3,7 +3,14 @@
     <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest><AssemblyName>ToolSuite</AssemblyName>
+    <!-- 应用图标：纯白线条扳手、透明背景、图形满版 95%。exe/任务栏取自 ApplicationIcon，
+         窗口与托盘从同一 ICO 的多尺寸帧读取。 -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\app-icon-256.png" />
+  </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ToolSuite.SuiteChecks" />
     <InternalsVisibleTo Include="ToolSuite.InstallerChecks" />

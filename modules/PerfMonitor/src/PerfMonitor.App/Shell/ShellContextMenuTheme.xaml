@@ -1,17 +1,17 @@
 <ResourceDictionary x:Class="PerfMonitor.App.Shell.ShellContextMenuTheme"
                     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- 托盘/性能条共享菜单的皮肤：取值见 docs/design-system.md。
-         圆角 16 容器 + 圆角 10 行、1 DIP 发丝描边、零投影、单一蓝色勾选。
+    <!-- 托盘/性能条共享菜单的皮肤：取值见 docs/UI Design/Apple Dark.md（落地映射见 docs/design-system.md）。
+         圆角 16 容器 + 圆角 10 行、1 DIP 发丝描边、零投影、单一靛蓝勾选。
          默认画刷为暗色值，运行时由 ShellContextMenuTheme.Apply(dark) 逐键覆盖，
          DynamicResource 引用即时跟随。 -->
-    <SolidColorBrush x:Key="ShellMenuBackgroundBrush" Color="#FF1D1D1F" />
-    <SolidColorBrush x:Key="ShellMenuForegroundBrush" Color="#FFF5F5F7" />
-    <SolidColorBrush x:Key="ShellMenuSecondaryBrush" Color="#FF86868B" />
-    <SolidColorBrush x:Key="ShellMenuCheckBrush" Color="#FF0071E3" />
-    <SolidColorBrush x:Key="ShellMenuHoverBrush" Color="#0FFFFFFF" />
-    <SolidColorBrush x:Key="ShellMenuBorderBrush" Color="#FF333336" />
-    <SolidColorBrush x:Key="ShellMenuDividerBrush" Color="#FF2A2A2C" />
+    <SolidColorBrush x:Key="ShellMenuBackgroundBrush" Color="#FF141419" />
+    <SolidColorBrush x:Key="ShellMenuForegroundBrush" Color="#FFF2F2F5" />
+    <SolidColorBrush x:Key="ShellMenuSecondaryBrush" Color="#FFA0A0AC" />
+    <SolidColorBrush x:Key="ShellMenuCheckBrush" Color="#FF7B77E0" />
+    <SolidColorBrush x:Key="ShellMenuHoverBrush" Color="#17FFFFFF" />
+    <SolidColorBrush x:Key="ShellMenuBorderBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="ShellMenuDividerBrush" Color="#0FFFFFFF" />
 
     <Style x:Key="ShellMenuRootStyle" TargetType="{x:Type ContextMenu}">
         <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI" />

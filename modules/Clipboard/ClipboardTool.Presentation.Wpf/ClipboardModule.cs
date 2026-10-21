@@ -78,6 +78,7 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
     private Window? _shortcutWindow;
     private void OpenShortcutSettings()
     {
+        if (_context?.RequestSettings is { } showSettings) { showSettings(Id); return; }
         if (_shortcutWindow is not null) { _shortcutWindow.Activate(); return; }
         if (_context is null) throw new InvalidOperationException("Module context is missing.");
         var store = _settingsStore ?? new JsonStore(_dataDir);
@@ -93,6 +94,12 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
         window.Closed += (_,_) => _shortcutWindow = null;
         _shortcutWindow = window;
         window.Show();
+    }
+
+    public string ReadShortcut()
+    {
+        if (_context is null) throw new InvalidOperationException("模块尚未配置。");
+        return _panel is null ? (_settingsStore ?? new JsonStore(_dataDir)).ReadSettings().Shortcut : _settings.Shortcut;
     }
 
     public void SetShortcut(string shortcut)

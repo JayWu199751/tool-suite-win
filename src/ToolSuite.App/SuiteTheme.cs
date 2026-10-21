@@ -69,6 +69,8 @@ internal sealed class SuiteTheme : IDisposable
             yield return ("SuiteInkDisabled", SystemColors.GrayTextBrush);
             yield return ("SuiteHairline", SystemColors.ControlDarkBrush);
             yield return ("SuiteStrong", SystemColors.ControlDarkBrush);
+            yield return ("SuiteMenuBorder", SystemColors.ControlDarkBrush);
+            yield return ("SuiteMenuDivider", SystemColors.ControlDarkBrush);
             yield return ("SuiteHover", SystemColors.ControlBrush);
             yield return ("SuiteWell", SystemColors.ControlBrush);
             yield return ("SuiteAccent", SystemColors.HighlightBrush);
@@ -80,29 +82,36 @@ internal sealed class SuiteTheme : IDisposable
             yield return ("SuiteSwitchThumb", SystemColors.WindowBrush);
             yield break;
         }
-        yield return ("SuiteBackground", Rgb(dark ? 0x00 : 0xF5, dark ? 0x00 : 0xF5, dark ? 0x00 : 0xF7));
-        yield return ("SuiteCard", Rgb(dark ? 0x1D : 0xFF, dark ? 0x1D : 0xFF, dark ? 0x1F : 0xFF));
-        yield return ("SuiteForeground", Rgb(dark ? 0xF5 : 0x1D, dark ? 0xF5 : 0x1D, dark ? 0xF7 : 0x1F));
-        yield return ("SuiteInk", Rgb(dark ? 0xF5 : 0x1D, dark ? 0xF5 : 0x1D, dark ? 0xF7 : 0x1F));
-        yield return ("SuiteInkSecondary", Rgb(dark ? 0x86 : 0x63, dark ? 0x86 : 0x63, dark ? 0x8B : 0x6A));
-        yield return ("SuiteInkTertiary", Rgb(dark ? 0xA1 : 0x75, dark ? 0xA1 : 0x75, dark ? 0xA6 : 0x7A));
-        yield return ("SuiteInkDisabled", Rgb(dark ? 0x55 : 0xA1, dark ? 0x55 : 0xA1, dark ? 0x5C : 0xA6));
-        yield return ("SuiteHairline", Rgb(dark ? 0x33 : 0xD6, dark ? 0x33 : 0xD6, dark ? 0x36 : 0xD6));
-        yield return ("SuiteStrong", Rgb(dark ? 0x4A : 0xB8, dark ? 0x4A : 0xB8, dark ? 0x4E : 0xBD));
-        yield return ("SuiteHover", Rgb(dark ? 0x2A : 0xE8, dark ? 0x2A : 0xE8, dark ? 0x2C : 0xED));
-        yield return ("SuiteWell", Rgb(dark ? 0x00 : 0xF5, dark ? 0x00 : 0xF5, dark ? 0x00 : 0xF7));
-        yield return ("SuiteAccent", Rgb(0x00, 0x71, 0xE3));
-        yield return ("SuiteAccentText", Rgb(0xFF, 0xFF, 0xFF));
-        yield return ("SuiteLink", Rgb(dark ? 0x29 : 0x00, dark ? 0x97 : 0x66, dark ? 0xFF : 0xCC));
-        yield return ("SuiteDanger", Rgb(dark ? 0xFF : 0xC7, dark ? 0x45 : 0x26, dark ? 0x3A : 0x1F));
-        yield return ("SuiteSuccess", Rgb(dark ? 0x30 : 0x1D, dark ? 0xD1 : 0x83, dark ? 0x58 : 0x48));
-        yield return ("SuiteSwitchTrack", Rgb(dark ? 0x3A : 0xE8, dark ? 0x3A : 0xE8, dark ? 0x3D : 0xED));
-        yield return ("SuiteSwitchThumb", Rgb(0xFF, 0xFF, 0xFF));
+        // 暗色取 docs/UI Design/Apple Dark.md：近黑画布 + 炭黑卡片 + 中性阶梯 + 单一家族靛蓝；
+        // 描边/悬停/选中沿用参考稿的 alpha 口径（6% / 9% / 12% 白），亮色保持原取值。
+        yield return ("SuiteBackground", dark ? Rgb(0x0B, 0x0B, 0x0E) : Rgb(0xF5, 0xF5, 0xF7));
+        yield return ("SuiteCard", dark ? Rgb(0x14, 0x14, 0x19) : Rgb(0xFF, 0xFF, 0xFF));
+        yield return ("SuiteForeground", dark ? Rgb(0xF2, 0xF2, 0xF5) : Rgb(0x1D, 0x1D, 0x1F));
+        yield return ("SuiteInk", dark ? Rgb(0xF2, 0xF2, 0xF5) : Rgb(0x1D, 0x1D, 0x1F));
+        yield return ("SuiteInkSecondary", dark ? Rgb(0xA0, 0xA0, 0xAC) : Rgb(0x63, 0x63, 0x6A));
+        yield return ("SuiteInkTertiary", dark ? Rgb(0x7E, 0x7E, 0x8A) : Rgb(0x75, 0x75, 0x7A));
+        yield return ("SuiteInkDisabled", dark ? Rgb(0x55, 0x55, 0x5F) : Rgb(0xA1, 0xA1, 0xA6));
+        yield return ("SuiteHairline", dark ? Argb(0x0F, 0xFF, 0xFF, 0xFF) : Rgb(0xD6, 0xD6, 0xD6));
+        // 菜单浮层：暗色描边取 Apple Dark 的 12% 白（6% 在壁纸上界定不住边界），分隔线仍用 6%。
+        yield return ("SuiteMenuBorder", dark ? Argb(0x1F, 0xFF, 0xFF, 0xFF) : Rgb(0xD6, 0xD6, 0xD6));
+        yield return ("SuiteMenuDivider", dark ? Argb(0x0F, 0xFF, 0xFF, 0xFF) : Rgb(0xE8, 0xE8, 0xED));
+        yield return ("SuiteStrong", dark ? Argb(0x1F, 0xFF, 0xFF, 0xFF) : Rgb(0xB8, 0xB8, 0xBD));
+        yield return ("SuiteHover", dark ? Argb(0x17, 0xFF, 0xFF, 0xFF) : Rgb(0xE8, 0xE8, 0xED));
+        yield return ("SuiteWell", dark ? Rgb(0x15, 0x15, 0x1A) : Rgb(0xF5, 0xF5, 0xF7));
+        yield return ("SuiteAccent", dark ? Rgb(0x7B, 0x77, 0xE0) : Rgb(0x00, 0x71, 0xE3));
+        yield return ("SuiteAccentText", dark ? Rgb(0xA7, 0xA4, 0xF0) : Rgb(0xFF, 0xFF, 0xFF));
+        yield return ("SuiteLink", dark ? Rgb(0xA7, 0xA4, 0xF0) : Rgb(0x00, 0x66, 0xCC));
+        yield return ("SuiteDanger", dark ? Rgb(0xE0, 0x5A, 0x52) : Rgb(0xC7, 0x26, 0x1F));
+        yield return ("SuiteSuccess", dark ? Rgb(0x57, 0xC0, 0x8A) : Rgb(0x1D, 0x83, 0x48));
+        yield return ("SuiteSwitchTrack", dark ? Argb(0x17, 0xFF, 0xFF, 0xFF) : Rgb(0xE8, 0xE8, 0xED));
+        yield return ("SuiteSwitchThumb", dark ? Rgb(0xF2, 0xF2, 0xF5) : Rgb(0xFF, 0xFF, 0xFF));
     }
 
-    private static SolidColorBrush Rgb(int red, int green, int blue)
+    private static SolidColorBrush Rgb(int red, int green, int blue) => Argb(0xFF, red, green, blue);
+
+    private static SolidColorBrush Argb(int alpha, int red, int green, int blue)
     {
-        var brush = new SolidColorBrush(Color.FromRgb((byte)red, (byte)green, (byte)blue));
+        var brush = new SolidColorBrush(Color.FromArgb((byte)alpha, (byte)red, (byte)green, (byte)blue));
         brush.Freeze();
         return brush;
     }

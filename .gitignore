@@ -1,10 +1,42 @@
-.worktrees/
-.tools/
-.packages/
-.dotnet/
-artifacts/
-**/bin/
-**/obj/
+# .NET 构建、发布与隔离检查产物
+**/[Bb]in/
+**/[Oo]bj/
+/artifacts/
+**/TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# 仓库本地工具与依赖缓存
+/.worktrees/
+/.tools/
+/.packages/
+/.dotnet/
+
+# IDE 个人状态
 .vs/
+.idea/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+
+# 本地代理记录与临时工作区
+/.workbuddy/
+/.workbuddy-ai/
+/.scratch/
+
+# 本地环境配置（示例文件仍可提交）
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+
+# 系统元数据与编辑器备份
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo

@@ -36,9 +36,15 @@
                         <ItemsControl x:Name="ItemsList" ItemsSource="{Binding Items}" AllowDrop="True" PreviewMouseLeftButtonDown="Items_PreviewMouseLeftButtonDown" PreviewMouseMove="Items_PreviewMouseMove" DragOver="Items_DragOver" Drop="Items_Drop">
                             <ItemsControl.ItemTemplate><DataTemplate>
                                 <Border x:Name="ItemRow" Background="Transparent" CornerRadius="{DynamicResource ControlRadius}" Padding="{DynamicResource RowPadding}" MinHeight="{DynamicResource RowMinHeight}" MouseLeftButtonDown="Item_MouseLeftButtonDown" ContextMenuOpening="Item_ContextMenuOpening">
-                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="8" /><ColumnDefinition /></Grid.ColumnDefinitions>
-                                        <CheckBox Style="{StaticResource CheckCircle}" IsChecked="{Binding IsCompleted, Mode=TwoWay}" Foreground="{Binding DataContext.CheckmarkBrush, RelativeSource={RelativeSource AncestorType=Window}}" VerticalAlignment="Top" AutomationProperties.Name="{Binding Text}" AutomationProperties.HelpText="空格切换完成状态；Alt 加上下方向键排序；Shift+F10 打开项目菜单" ToolTip="标记完成 / 未完成" />
-                                        <TextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" Padding="0,4">
+                                    <Grid VerticalAlignment="Center"><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="8" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                                        <!-- 圆圈必须与首行文字居中对齐：文字会换行、字号还会随系统文字缩放变化，
+                                             所以用一条同字体、同内边距、不换行的隐藏文本量出「首行高度」，圆圈在这个高度里居中；
+                                             整格再随行内容居中，多行时圆圈贴在首行而不是整段中间。 -->
+                                        <Grid Grid.Column="0" VerticalAlignment="Top">
+                                            <TextBlock Text="{Binding Text}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Padding="0,4" Visibility="Hidden" Focusable="False" IsHitTestVisible="False" />
+                                            <CheckBox Style="{StaticResource CheckCircle}" IsChecked="{Binding IsCompleted, Mode=TwoWay}" Foreground="{Binding DataContext.CheckmarkBrush, RelativeSource={RelativeSource AncestorType=Window}}" VerticalAlignment="Center" AutomationProperties.Name="{Binding Text}" AutomationProperties.HelpText="空格切换完成状态；Alt 加上下方向键排序；Shift+F10 打开项目菜单" ToolTip="标记完成 / 未完成" />
+                                        </Grid>
+                                        <TextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Top" Padding="0,4">
                                             <TextBlock.Style><Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
                                                 <Style.Triggers>

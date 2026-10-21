@@ -6,7 +6,7 @@
 
 **Status:** resolved
 
-**实施结果：** 性能条以模块形式接入统一宿主，保留 CPU/内存/GPU/显存/网络/时间与温度显示、指标选择、全屏自动隐藏、手动显隐、贴靠与多显示器位置恢复；只查询已启用指标，隐藏时暂停采样与时钟，恢复后重建差分基线。`PerfMonitor.Core.Tests` 161、`PerfMonitor.Windows.Tests` 50、`PerfMonitor.App.Tests` 24 通过；真实硬件缺失组合与多显示器/DPI 人工场景未执行，见[工单 09 验证](../docs/validation/ticket-09.md)。代码审查修复让性能条设置窗的主题行与开机启动行由套件托管（隐藏且不回写，启动时把模块旧字段归一为套件有效主题与关闭自启），详见[审查修复记录](../docs/validation/code-review-fixes.md)。
+**实施结果：** 性能条以模块形式接入统一宿主，保留 CPU/内存/GPU/显存/网络/时间与温度显示、指标选择、全屏自动隐藏、手动显隐、贴靠与多显示器位置恢复；只查询已启用指标，隐藏时暂停采样与时钟，恢复后重建差分基线。`PerfMonitor.Core.Tests` 161、`PerfMonitor.Windows.Tests` 50、`PerfMonitor.App.Tests` 24 通过；真实硬件缺失组合与多显示器/DPI 人工场景未执行，见[工单 09 验证](../validation/ticket-09.md)。代码审查修复让性能条设置窗的主题行与开机启动行由套件托管（隐藏且不回写，启动时把模块旧字段归一为套件有效主题与关闭自启），详见[审查修复记录](../validation/code-review-fixes.md)。
 
 **规格：** [工具套件合并规格](../spec.md)。主要覆盖用户故事 20–24、38、40 中的性能条行为。
 

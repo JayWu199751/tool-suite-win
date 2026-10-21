@@ -2,11 +2,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
+using System.Windows.Media;
 using ButtonBase = System.Windows.Controls.Primitives.ButtonBase;
+using MenuItem = System.Windows.Controls.MenuItem;
+using ContextMenu = System.Windows.Controls.ContextMenu;
 using ToolSuite.App;
 using ToolSuite.Core;
 using Application = System.Windows.Application;
 using Forms = System.Windows.Forms;
+using Color = System.Drawing.Color;
 
 namespace ToolSuite.SuiteChecks;
 
@@ -30,6 +34,11 @@ internal static class HostIntegrationChecks
         controller.ErrorReported += errors.Add;
         var settings = new SettingsHost(controller);
         using var tray = new TrayHost(controller, () => settings.Show(), () => Task.CompletedTask);
+        // 托盘图标必须来自应用资源（多尺寸 ICO 的托盘帧），缺失时会静默退回系统默认图标。
+        var trayIcon = tray.TrayIconForVerification;
+        Assert(trayIcon is not null, "托盘图标未从 Assets/app.ico 加载");
+        Assert(trayIcon!.Width == Forms.SystemInformation.SmallIconSize.Width,
+            $"托盘图标应取系统小图标尺寸（{trayIcon.Width} vs {Forms.SystemInformation.SmallIconSize.Width}）");
         using var theme = new SuiteTheme(controller, Application.Current.Dispatcher);
         theme.AppearanceApplied += tray.ApplyAppearance;
         try
@@ -37,12 +46,13 @@ internal static class HostIntegrationChecks
             await controller.StartAsync();
             tray.RefreshMenuForVerification();
             AssertThreeGroups(tray);
+            AssertTrayMenuSkin(tray);
             AssertClipboardGroupHasNoSummon(tray);
             Assert(controller.Tools.All(x => x.State == ToolState.Running), "三个真实工具应全部运行：" + Describe(controller));
             log.Add("单一托盘按剪贴板/性能条/便签分组展示状态与动作，剪贴板无呼出面板动作");
 
             // 停用一个工具，另外两个继续运行。
-            Toggle(tray, "pinto").PerformClick();
+            ClickMenuItem(Toggle(tray, "pinto"));
             await WaitUntil(() => StateOf(controller, "pinto") == ToolState.Disabled, "便签停用");
             Assert(StateOf(controller, "clipboard") == ToolState.Running && StateOf(controller, "perf-monitor") == ToolState.Running,
                 "停用便签不得影响剪贴板与性能条：" + Describe(controller));
@@ -62,16 +72,17 @@ internal static class HostIntegrationChecks
             ClickToggle(window, "pinto", false);
             await WaitUntil(() => StateOf(controller, "pinto") == ToolState.Disabled, "设置内停用便签");
             settings.Close();
-            Assert(settings.Current is null && !Application.Current.Windows.Cast<Window>().Contains(window), "设置关闭后必须释放窗口");
+            Assert(settings.Current is null && !Application.Current.Windows.Cast<Window>().Contains(window.View), "设置关闭后必须释放窗口");
             log.Add("统一设置按需创建、关闭释放；主题与启停操作不隐式启用停用工具");
 
             // 全部停用后托盘与设置仍可用，可重新启用任意工具。
             foreach (var id in new[] { "clipboard", "perf-monitor", "pinto" })
-                if (StateOf(controller, id) == ToolState.Running) { Toggle(tray, id).PerformClick(); await WaitUntil(() => StateOf(controller, id) == ToolState.Disabled, id + " 停用"); }
+                if (StateOf(controller, id) == ToolState.Running) { ClickMenuItem(Toggle(tray, id)); await WaitUntil(() => StateOf(controller, id) == ToolState.Disabled, id + " 停用"); }
             await WaitUntil(() => controller.Tools.All(x => x.State != ToolState.Running), "全部停用");
             tray.RefreshMenuForVerification();
             AssertThreeGroups(tray);
-            Assert(controller.Tools.All(x => Toggle(tray, x.Id).Enabled), "全部停用后各分组启停动作仍可用");
+            AssertTrayMenuSkin(tray);
+            Assert(controller.Tools.All(x => Toggle(tray, x.Id).IsEnabled), "全部停用后各分组启停动作仍可用");
             Assert(await controller.ExecuteCommandAsync("perf-monitor", "settings"), "停用工具应能打开离线设置");
             Assert(StateOf(controller, "perf-monitor") == ToolState.Disabled, "打开离线设置不得隐式启用停用工具");
             tray.InvokeSettingsMenuForVerification();
@@ -92,12 +103,21 @@ internal static class HostIntegrationChecks
             Assert(StateOf(controller, "pinto") == ToolState.Disabled && StateOf(controller, "clipboard") == ToolState.Running,
                 "主题切换不得改变工具启停状态：" + Describe(controller));
             var menu = tray.MenuForVerification;
+            // 托盘浮层必须落在设计 token 上（docs/design-system.md：Paper #141419/#FFFFFF，Ink #F2F2F5/#1D1D1F）；
+            // 高对比度交还系统色。菜单是 WPF ContextMenu，画刷走 DynamicResource 跟随 Suite* 键。
             if (previous == ThemePreference.Dark)
-                Assert(menu.BackColor.GetBrightness() < 0.3f && menu.ForeColor.GetBrightness() > 0.7f, "暗色托盘应使用深底浅字");
+            {
+                Assert(Argb(menu.Background) == Color.FromArgb(0x14, 0x14, 0x19).ToArgb(), $"暗色托盘浮层应为 #141419（实际 {Argb(menu.Background):X8}）");
+                Assert(Argb(menu.Foreground) == Color.FromArgb(0xF2, 0xF2, 0xF5).ToArgb(), $"暗色托盘正文应为 #F2F2F5（实际 {Argb(menu.Foreground):X8}）");
+            }
             else
-                Assert(menu.BackColor.GetBrightness() > 0.7f && menu.ForeColor.GetBrightness() < 0.3f, "浅色托盘应使用浅底深字");
+            {
+                Assert(Argb(menu.Background) == Color.White.ToArgb(), $"亮色托盘浮层应为 #FFFFFF（实际 {Argb(menu.Background):X8}）");
+                Assert(Argb(menu.Foreground) == Color.FromArgb(0x1D, 0x1D, 0x1F).ToArgb(), $"亮色托盘正文应为 #1D1D1F（实际 {Argb(menu.Foreground):X8}）");
+            }
             tray.ApplyAppearance(false, true);
-            Assert(menu.BackColor == System.Drawing.SystemColors.Window && menu.ForeColor == System.Drawing.SystemColors.WindowText,
+            Assert(Argb(menu.Background) == System.Drawing.SystemColors.Window.ToArgb()
+                    && Argb(menu.Foreground) == System.Drawing.SystemColors.WindowText.ToArgb(),
                 "高对比度托盘必须交还系统配色");
             tray.ApplyAppearance(theme.IsDark, false);
             await controller.ExecuteCommandAsync("perf-monitor", "visibility");
@@ -241,8 +261,8 @@ internal static class HostIntegrationChecks
             Assert(errors.Any(x => x.Contains("便签")), "启动失败必须给出含工具名的可操作提示：" + string.Join(" | ", errors));
             tray.RefreshMenuForVerification();
             var group = Group(tray, "pinto");
-            Assert(group.Text?.Contains("启动失败") == true, "托盘分组应显示启动失败状态");
-            Assert((Toggle(tray, "pinto").Text ?? "") == "重新启用", "失败分组应提供重新启用动作");
+            Assert(HeaderText(group).Contains("启动失败"), "托盘分组应显示启动失败状态");
+            Assert(HeaderText(Toggle(tray, "pinto")) == "重新启用", "失败分组应提供重新启用动作");
             log.Add("单模块启动失败显示失败状态与可操作提示，其他模块继续运行");
 
             tray.InvokeSettingsMenuForVerification();
@@ -251,7 +271,7 @@ internal static class HostIntegrationChecks
                 "设置应对启动失败的工具给出重试动作");
 
             File.Delete(blocked);
-            Toggle(tray, "pinto").PerformClick();
+            ClickMenuItem(Toggle(tray, "pinto"));
             await WaitUntil(() => StateOf(controller, "pinto") == ToolState.Running, "失败模块重试启动");
             settings.Close();
             log.Add("清理故障后可从托盘与统一设置重试启动失败模块");
@@ -263,28 +283,67 @@ internal static class HostIntegrationChecks
     {
         var menu = tray.MenuForVerification;
         foreach (var id in new[] { "clipboard", "perf-monitor", "pinto" })
-            Assert(menu.Items[id] is Forms.ToolStripMenuItem, $"托盘缺少工具分组：{id}");
-        Assert(menu.Items["settings"] is not null && menu.Items["exit"] is not null, "托盘必须提供统一设置与退出");
+            Assert(Group(tray, id) is not null, $"托盘缺少工具分组：{id}");
+        Assert(menu.Items.OfType<MenuItem>().Any(x => (string?)x.Tag == "settings")
+                && menu.Items.OfType<MenuItem>().Any(x => (string?)x.Tag == "exit"), "托盘必须提供统一设置与退出");
         Assert(menu.Items.Count == 6, "托盘应只有三个工具分组、分隔、设置与退出");
+    }
+
+    /// <summary>托盘浮层必须用套件自己的卡片模板。ContextMenu 是弹出层的根元素，WPF 不会把它
+    /// Resources 里的隐式样式套到它自己身上；漏掉显式套用就会退回系统默认模板——方角、灰描边、
+    /// 亮色分隔线，以及压住首列文字的浅色滚动条衬底（暗色下尤为明显）。</summary>
+    private static void AssertTrayMenuSkin(TrayHost tray)
+    {
+        var menu = tray.MenuForVerification;
+        menu.ApplyTemplate();
+        var root = System.Windows.Media.VisualTreeHelper.GetChildrenCount(menu) > 0
+            ? System.Windows.Media.VisualTreeHelper.GetChild(menu, 0) : null;
+        Assert(root is System.Windows.Controls.Border { CornerRadius.TopLeft: > 0 },
+            "托盘菜单必须落在套件卡片模板上（16 DIP 圆角），当前退回系统默认模板");
+        var separator = menu.Items.OfType<System.Windows.Controls.Separator>().FirstOrDefault();
+        Assert(separator is not null, "托盘菜单必须保留分隔线");
+        separator!.ApplyTemplate();
+        var bar = System.Windows.Media.VisualTreeHelper.GetChildrenCount(separator) > 0
+            ? System.Windows.Media.VisualTreeHelper.GetChild(separator, 0) as System.Windows.Controls.Border : null;
+        var divider = menu.TryFindResource("SuiteMenuDivider") as System.Windows.Media.Brush;
+        Assert(bar?.Background is { } fill && divider is not null && Argb(fill) == Argb(divider),
+            "菜单分隔线必须取 SuiteMenuDivider 发丝线，否则退回系统默认的浅色横线");
     }
 
     private static void AssertClipboardGroupHasNoSummon(TrayHost tray)
     {
-        foreach (Forms.ToolStripItem item in Group(tray, "clipboard").DropDownItems)
-            Assert(!(item.Text ?? "").Contains("呼出") && !(item.Text ?? "").Contains("面板"), "剪贴板分组不得出现面板呼出动作：" + item.Text);
-        Assert(Group(tray, "clipboard").DropDownItems.Cast<Forms.ToolStripItem>().Any(x => (x.Text ?? "") == "清空历史"),
-            "剪贴板分组应保留清空历史动作");
-        Assert(Group(tray, "clipboard").DropDownItems.Cast<Forms.ToolStripItem>().Any(x => (x.Text ?? "").Contains("快捷键")),
-            "剪贴板分组应保留快捷键管理动作");
+        var labels = Group(tray, "clipboard").Items.OfType<MenuItem>().Select(HeaderText).ToList();
+        Assert(labels.All(x => !x.Contains("呼出") && !x.Contains("面板")), "剪贴板分组不得出现面板呼出动作：" + string.Join("、", labels));
+        Assert(labels.Any(x => x == "清空历史"), "剪贴板分组应保留清空历史动作");
+        Assert(labels.Any(x => x.Contains("快捷键")), "剪贴板分组应保留快捷键管理动作");
     }
 
-    private static Forms.ToolStripMenuItem Group(TrayHost tray, string id) =>
-        (Forms.ToolStripMenuItem)(tray.MenuForVerification.Items[id] ?? throw new Exception("缺少托盘分组：" + id));
+    private static MenuItem Group(TrayHost tray, string id) =>
+        tray.MenuForVerification.Items.OfType<MenuItem>().SingleOrDefault(x => (string?)x.Tag == id)
+        ?? throw new Exception("缺少托盘分组：" + id);
 
-    private static Forms.ToolStripMenuItem Toggle(TrayHost tray, string id) =>
-        (Forms.ToolStripMenuItem)Group(tray, id).DropDownItems[0];
+    private static MenuItem Toggle(TrayHost tray, string id) => (MenuItem)Group(tray, id).Items[0];
 
-    private static void ClickToggle(SettingsWindow window, string id, bool enabled)
+    /// <summary>菜单项标题可能是纯文本，也可能是"名称 + 次要状态"的双色 TextBlock。</summary>
+    private static string HeaderText(MenuItem item) =>
+        item.Header switch
+        {
+            string text => text,
+            System.Windows.Controls.TextBlock block => string.Concat(block.Inlines.OfType<System.Windows.Documents.Run>().Select(r => r.Text)),
+            null => string.Empty,
+            var other => other.ToString() ?? string.Empty,
+        };
+
+    private static void ClickMenuItem(MenuItem item) => item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+
+    private static int Argb(System.Windows.Media.Brush brush) => ColorOf(brush).ToArgb();
+
+    private static System.Drawing.Color ColorOf(System.Windows.Media.Brush brush) =>
+        brush is System.Windows.Media.SolidColorBrush solid
+            ? System.Drawing.Color.FromArgb(solid.Color.A, solid.Color.R, solid.Color.G, solid.Color.B)
+            : System.Drawing.Color.Transparent;
+
+    private static void ClickToggle(UnifiedSettingsPage window, string id, bool enabled)
     {
         var toggle = window.ToolToggleForVerification(id) ?? throw new Exception("设置缺少工具开关：" + id);
         toggle.IsChecked = enabled;

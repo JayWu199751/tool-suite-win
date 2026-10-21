@@ -384,12 +384,6 @@ public sealed class StartupShellController : IDisposable
                 break;
             case ShellMenuAction.ToggleCenterInTaskbarRow:
                 UpdateSettings(new SettingsPatch { CenterInTaskbarRow = !Settings.CenterInTaskbarRow });
-                if (Settings.CenterInTaskbarRow)
-                {
-                    // 开启立即结算一次，卡片弹回行中心；关闭保持原地不动。
-                    SettlePlacement();
-                }
-
                 break;
             case ShellMenuAction.ToggleTransparentDisplay:
                 UpdateSettings(new SettingsPatch { TransparentDisplay = !Settings.TransparentDisplay });
@@ -449,6 +443,7 @@ public sealed class StartupShellController : IDisposable
         }
 
         var autoHideOnFullscreenChanged = Settings.AutoHideOnFullscreen != next.AutoHideOnFullscreen;
+        var enableRowCentering = !Settings.CenterInTaskbarRow && next.CenterInTaskbarRow;
         Settings = next;
         _host.ApplySettings(next);
         if (samplingIntervalChanged && CanSampleMetrics)
@@ -474,7 +469,9 @@ public sealed class StartupShellController : IDisposable
             }
         }
 
-        return next;
+        // 菜单与统一设置共用这条路径；开启立即结算，关闭保持原地不动。
+        if (enableRowCentering) SettlePlacement();
+        return Settings;
     }
 
     public void OnPerformanceBarRightClick()

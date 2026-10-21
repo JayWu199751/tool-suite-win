@@ -57,7 +57,7 @@ public sealed class PerformanceBarViewModelSettingsTests
             vm.ApplySettings(PerformanceSettings.Default with { Theme = BarTheme.Dark });
 
             var label = Assert.IsType<SolidColorBrush>(vm.LabelBrush);
-            Assert.Equal(Color.FromRgb(0x86, 0x86, 0x8B), label.Color);
+            Assert.Equal(Color.FromRgb(0xA0, 0xA0, 0xAC), label.Color);
             // 视觉规范要求零投影：层级只靠色差与圆角，卡片不挂任何 Effect。
             Assert.Null(vm.ShadowEffect);
 
@@ -66,7 +66,7 @@ public sealed class PerformanceBarViewModelSettingsTests
                 1, CpuPercentage: 9, MemoryPercentage: 51, MemoryUsedGiB: null, MemoryTotalGiB: null,
                 DateTimeOffset.UtcNow));
 
-            Assert.Equal(Color.FromRgb(0xF5, 0xF5, 0xF7), ((SolidColorBrush)vm.ForegroundBrush).Color);
+            Assert.Equal(Color.FromRgb(0xF2, 0xF2, 0xF5), ((SolidColorBrush)vm.ForegroundBrush).Color);
             Assert.Equal(vm.ForegroundBrush, vm.CpuPercentageBrush);
             Assert.Equal(vm.ForegroundBrush, vm.MemoryPercentageBrush);
             // GPU 读数未到达：缺失占位用弱化色，而非零值或主题色。

@@ -16,6 +16,70 @@
         </Setter>
     </Style>
 
+    <Style x:Key="Suite.SettingsInput" TargetType="{x:Type TextBox}">
+        <Setter Property="Background" Value="{DynamicResource SuiteWell}" />
+        <Setter Property="Foreground" Value="{DynamicResource SuiteInk}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SuiteStrong}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource Suite.FocusVisual}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TextBox}">
+                    <Border x:Name="InputSurface" Background="{TemplateBinding Background}" CornerRadius="16"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer x:Name="PART_ContentHost" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="InputSurface" Property="BorderBrush" Value="{DynamicResource SuiteAccent}" /></Trigger>
+                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="Suite.SettingsSection" TargetType="{x:Type Expander}">
+        <Setter Property="Foreground" Value="{DynamicResource SuiteInk}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Expander}">
+                    <StackPanel>
+                        <ToggleButton x:Name="HeaderSite" MinHeight="48" Cursor="Hand"
+                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                      FocusVisualStyle="{StaticResource Suite.FocusVisual}"
+                                      AutomationProperties.Name="{Binding Path=(AutomationProperties.Name), RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                    <Border x:Name="HeaderSurface" Background="Transparent" CornerRadius="12" Padding="4,4">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="24" /></Grid.ColumnDefinitions>
+                                            <ContentPresenter Content="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}" VerticalAlignment="Center" />
+                                            <Path x:Name="Chevron" Grid.Column="1" Data="M 0 0 L 5 5 L 0 10" Width="6" Height="10" Stretch="Fill"
+                                                  Stroke="{DynamicResource SuiteInkSecondary}" StrokeThickness="1.5"
+                                                  RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="Chevron" Property="RenderTransform"><Setter.Value><RotateTransform Angle="90" /></Setter.Value></Setter></Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderSurface" Property="Background" Value="{DynamicResource SuiteHover}" /></Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <ContentPresenter x:Name="Body" Margin="4,12,4,0" ContentSource="Content" Visibility="Collapsed" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True"><Setter TargetName="Body" Property="Visibility" Value="Visible" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- 卡片：28 DIP 圆角、无描边、无投影；画布与卡片只用色差分层。 -->
     <Style x:Key="Suite.Card" TargetType="{x:Type Border}">
         <Setter Property="Background" Value="{DynamicResource SuiteCard}" />

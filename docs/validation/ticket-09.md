@@ -172,7 +172,7 @@ SDK 固定为 `C:/Users/10854/AppData/Local/Microsoft/dotnet/dotnet.exe`（10.0.
   开机启动默认关闭与失败反馈、日常内存观察方式（不含未测量的节省数值）、人工验收清单与已知限制。
 - 更新 [README.md](../../README.md)：项目结构、快速开始、逐工程检查命令、去除此前的
   “工具将在后续工单接入/当前界面显示尚未接入”等过时描述。
-- 工单 01–09 状态更新为 resolved 并补充实施结果；[tickets/README.md](../../tickets/README.md)
+- 工单 01–09 状态更新为 resolved 并补充实施结果；[docs/tickets/README.md](../tickets/README.md)
   同步说明最终状态。
 
 ## 八、风险
