@@ -12,6 +12,11 @@
 已并入实现，逐项判定与证据见[审查修复记录](../docs/validation/code-review-fixes.md)；受影响的
 工单 03、04、06、08 顶部“实施结果”已同步检查数字与行为变化。
 
+后续的视觉重构（按 `docs/UI Design` 的 Apple 亮暗参考稿重建全部可视窗口）落地映射见
+[视觉规范](../docs/design-system.md)，改动覆盖工单 02～08 的全部界面，检查入口不变：
+剪贴板 `ClipboardTool.Tests` + `ToolSuite.ClipboardChecks`、性能 `PerfMonitor.*.Tests`、
+便签 `Pinto.*Checks`、宿主 `ToolSuite.SuiteChecks`/`LifecycleChecks`、安装器 `ToolSuite.InstallerChecks`。
+
 | 编号 | 工单 | 直接前置 | 状态 |
 | --- | --- | --- | --- |
 | 01 | [统一宿主与独立数据启动](01-host-and-independent-data.md) | 无 | resolved |
