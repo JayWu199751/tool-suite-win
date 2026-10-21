@@ -34,6 +34,8 @@ public sealed class InstallerEngine(IRegistryAccess registry, IShortcutWriter sh
         EnsureNotRunning(exePath);
         EnsureNotRunning(Path.Combine(install, SuiteIdentity.SetupExecutableName));
         var upgraded = File.Exists(exePath);
+        // 回滚要把卸载登记恢复成旧版本号：替换前先记住旧安装的版本，事后再从磁盘兜底。
+        var previousVersion = upgraded ? ReadInstalledVersion(install) : null;
 
         var staging = install + ".staging-" + Guid.NewGuid().ToString("N");
         var previous = install + ".previous-" + Guid.NewGuid().ToString("N");
@@ -74,13 +76,17 @@ public sealed class InstallerEngine(IRegistryAccess registry, IShortcutWriter sh
                 throw;
             }
 
-            // 替换已经发生：先清掉可能半写的登记与快捷方式，再恢复旧安装；
-            // 回滚本身失败时保留原始异常，并把残留位置写进消息。
-            var failures = RollBack(install, previous, movedPrevious);
-            if (failures.Count == 0) throw;
+            // 替换已经发生：先清掉可能半写的登记与快捷方式，再恢复旧安装。
+            // 文件恢复失败才算回滚未完成；登记/快捷方式还原失败按可恢复的次生失败上报。
+            var (essential, restored) = RollBack(install, previous, movedPrevious, previousVersion, startMenu, desktop);
+            if (essential.Count == 0 && restored.Count == 0) throw;
+            if (essential.Count == 0)
+                throw new InvalidOperationException(
+                    $"{exception.Message} 旧安装已恢复，但卸载登记或快捷方式未能还原：{string.Join("；", restored)}。", exception);
             var residual = Directory.Exists(previous) ? previous : install;
+            var detail = string.Join("；", essential.Concat(restored));
             throw new InvalidOperationException(
-                $"{exception.Message} 安装回滚未完成：{string.Join("；", failures)}。残留位置：{residual}。", exception);
+                $"{exception.Message} 安装回滚未完成：{detail}。残留位置：{residual}。", exception);
         }
         finally
         {
@@ -92,26 +98,57 @@ public sealed class InstallerEngine(IRegistryAccess registry, IShortcutWriter sh
         return new InstallResult(install, version, upgraded);
     }
 
-    /// <summary>回滚到替换前状态：删半写登记与快捷方式，升级场景恢复旧目录，全新安装删除新目录。
-    /// 每一步独立记录失败，不抛出，避免掩盖原始安装异常。</summary>
-    private List<string> RollBack(string install, string previous, bool hadPrevious)
+    /// <summary>回滚到替换前状态：删半写登记与快捷方式，升级场景恢复旧目录并把登记与快捷方式
+    /// 还原成旧安装，全新安装删除新目录。返回（文件恢复失败，登记/快捷方式还原失败）；
+    /// 每一步独立记录，不抛出，避免掩盖原始安装异常。</summary>
+    private (List<string> Essential, List<string> Restored) RollBack(string install, string previous, bool hadPrevious,
+        string? previousVersion, bool startMenu, bool desktop)
     {
-        List<string> failures = [];
+        List<string> essential = [];
+        List<string> restored = [];
         try { registry.DeleteTree(RegistryHiveKind.CurrentUser, UninstallKeyPath); }
-        catch (Exception exception) { failures.Add("清理卸载登记失败：" + exception.Message); }
+        catch (Exception exception) { essential.Add("清理卸载登记失败：" + exception.Message); }
         try
         {
             shortcuts.Delete(StartMenuShortcutPath);
             shortcuts.Delete(DesktopShortcutPath);
         }
-        catch (Exception exception) { failures.Add("清理快捷方式失败：" + exception.Message); }
+        catch (Exception exception) { essential.Add("清理快捷方式失败：" + exception.Message); }
+        var moved = false;
         try
         {
             if (Directory.Exists(install)) Directory.Delete(install, recursive: true);
-            if (hadPrevious) Directory.Move(previous, install);
+            if (hadPrevious)
+            {
+                Directory.Move(previous, install);
+                moved = true;
+            }
         }
-        catch (Exception exception) { failures.Add("恢复旧安装失败：" + exception.Message); }
-        return failures;
+        catch (Exception exception) { essential.Add("恢复旧安装失败：" + exception.Message); }
+        if (!moved) return (essential, restored);
+
+        // 旧安装已回到原位：登记与快捷方式也要回到旧版本，否则用户会看到「已安装但应用列表里没有」。
+        try { WriteUninstallRegistration(install, previousVersion ?? ReadInstalledVersion(install) ?? version); }
+        catch (Exception exception) { restored.Add("恢复旧版本卸载登记失败：" + exception.Message); }
+        try { ApplyShortcuts(install, startMenu, desktop); }
+        catch (Exception exception) { restored.Add("恢复旧安装快捷方式失败：" + exception.Message); }
+        return (essential, restored);
+    }
+
+    /// <summary>读取安装目录里记录的版本号；缺失或为空时返回 null，由调用方决定兜底。</summary>
+    private static string? ReadInstalledVersion(string install)
+    {
+        try
+        {
+            var path = Path.Combine(install, "version.txt");
+            if (!File.Exists(path)) return null;
+            var text = File.ReadAllText(path).Trim();
+            return text.Length == 0 ? null : text;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     /// <summary>卸载：保留用户数据，只删除套件安装目录、套件自己的卸载键、启动值与快捷方式。
@@ -143,11 +180,11 @@ public sealed class InstallerEngine(IRegistryAccess registry, IShortcutWriter sh
         shortcuts.Delete(DesktopShortcutPath);
     }
 
-    private void WriteUninstallRegistration(string install)
+    private void WriteUninstallRegistration(string install, string? versionOverride = null)
     {
         var setup = Path.Combine(install, SuiteIdentity.SetupExecutableName);
         registry.WriteString(RegistryHiveKind.CurrentUser, UninstallKeyPath, "DisplayName", SuiteIdentity.ProductName);
-        registry.WriteString(RegistryHiveKind.CurrentUser, UninstallKeyPath, "DisplayVersion", version);
+        registry.WriteString(RegistryHiveKind.CurrentUser, UninstallKeyPath, "DisplayVersion", versionOverride ?? version);
         registry.WriteString(RegistryHiveKind.CurrentUser, UninstallKeyPath, "Publisher", "ToolSuite");
         registry.WriteString(RegistryHiveKind.CurrentUser, UninstallKeyPath, "InstallLocation", install);
         registry.WriteString(RegistryHiveKind.CurrentUser, UninstallKeyPath, "DisplayIcon",

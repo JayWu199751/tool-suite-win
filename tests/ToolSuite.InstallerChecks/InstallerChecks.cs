@@ -53,15 +53,22 @@ internal sealed class FakeRegistry : IRegistryAccess
     private static string Key(RegistryHiveKind hive, string subKey) => hive + "\\" + subKey;
 }
 
-/// <summary>可控失败注册表：写入指定值名时抛异常，用于模拟卸载登记半写。</summary>
-internal sealed class FailingRegistry(FakeRegistry inner, string failOnValueName) : IRegistryAccess
+/// <summary>可控失败注册表：写入指定值名时抛异常，用于模拟卸载登记半写。
+/// 默认一次性失败（瞬时写入错误），可传 <paramref name="failTimes"/> 模拟持续失败。</summary>
+internal sealed class FailingRegistry(FakeRegistry inner, string failOnValueName, int failTimes = 1) : IRegistryAccess
 {
+    private int remaining = failTimes;
+
     public string? ReadString(RegistryHiveKind hive, string subKey, string valueName) =>
         inner.ReadString(hive, subKey, valueName);
 
     public void WriteString(RegistryHiveKind hive, string subKey, string valueName, string value)
     {
-        if (valueName == failOnValueName) throw new IOException("模拟写入失败：" + valueName);
+        if (valueName == failOnValueName && remaining > 0)
+        {
+            remaining--;
+            throw new IOException("模拟写入失败：" + valueName);
+        }
         inner.WriteString(hive, subKey, valueName, value);
     }
 
@@ -174,7 +181,7 @@ internal static class InstallerChecks
         log.Add("套件文件被占用时拒绝升级并提示退出后重试，解除占用后可重试升级");
     }
 
-    /// <summary>升级时卸载登记写入失败：旧安装必须原样留在安装目录，半写的登记要被清掉。</summary>
+    /// <summary>升级时卸载登记写入失败：旧安装必须原样留在安装目录，登记与快捷方式回到旧版本状态。</summary>
     private static void UpgradeRegistrationFailureKeepsOldInstall(string root, List<string> log)
     {
         var baseDir = Path.Combine(root, "rollback-upgrade");
@@ -191,11 +198,17 @@ internal static class InstallerChecks
         Assert(File.ReadAllText(Path.Combine(install, "ToolSuite.exe")) == "exe-1.0.0",
             "升级失败必须把旧版本文件恢复到原安装目录");
         Assert(File.ReadAllText(Path.Combine(install, "version.txt")) == "1.0.0", "升级失败必须恢复旧版本号");
-        Assert(registry.ReadString(RegistryHiveKind.CurrentUser, InstallerEngine.UninstallKeyPath, "DisplayName") is null,
-            "升级失败必须清理已半写的卸载登记");
+        Assert(registry.ReadString(RegistryHiveKind.CurrentUser, InstallerEngine.UninstallKeyPath, "DisplayName") == SuiteIdentity.ProductName,
+            "升级失败必须把卸载登记恢复为旧安装，而不是留下半写或空白条目");
+        Assert(registry.ReadString(RegistryHiveKind.CurrentUser, InstallerEngine.UninstallKeyPath, "DisplayVersion") == "1.0.0",
+            "升级失败后卸载登记必须显示旧版本号");
+        Assert(registry.ReadString(RegistryHiveKind.CurrentUser, InstallerEngine.UninstallKeyPath, "InstallLocation") == install,
+            "升级失败后卸载登记的安装位置必须仍指向原目录");
         Assert(LeftoverDirectories(install) == 0, "升级失败不得遗留暂存或备份目录");
         Assert(shortcuts.Deleted.Contains(InstallerEngine.StartMenuShortcutPath), "升级失败必须清理指向新安装的快捷方式");
-        log.Add("升级写卸载登记失败时恢复旧安装、清理半写登记与快捷方式");
+        Assert(shortcuts.Created.Count(x => x.Path == InstallerEngine.StartMenuShortcutPath) == 2,
+            "升级失败必须按旧安装重建开始菜单快捷方式");
+        log.Add("升级写卸载登记失败时恢复旧安装、旧版本登记与快捷方式");
     }
 
     /// <summary>全新安装时快捷方式写入失败：删除新安装目录并清理已写入的卸载键。</summary>

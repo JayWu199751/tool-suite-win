@@ -18,7 +18,7 @@
 
 | # | 发现 | 轴 | 判定 | 处理 |
 | --- | --- | --- | --- | --- |
-| A | 安装器在 `Directory.Move(staging, install)` 之后就丢弃旧安装，随后才写卸载登记与快捷方式；这两步抛异常时用户看到失败，旧安装已删、新安装残留、登记可能半写（`tools/ToolSuite.Installer.Core/InstallerEngine.cs`） | 规格 | 缺陷 | 把“替换目录 + 写卸载登记 + 写快捷方式”纳入同一事务，失败时清理半写登记/快捷方式并恢复旧目录；回滚失败保留原始异常并写明残留位置 |
+| A | 安装器在 `Directory.Move(staging, install)` 之后就丢弃旧安装，随后才写卸载登记与快捷方式；这两步抛异常时用户看到失败，旧安装已删、新安装残留、登记可能半写（`tools/ToolSuite.Installer.Core/InstallerEngine.cs`） | 规格 | 缺陷 | 把“替换目录 + 写卸载登记 + 写快捷方式”纳入同一事务，失败时清理半写登记/快捷方式、恢复旧目录并按旧版本重建登记与快捷方式；文件恢复失败保留原始异常并写明残留位置 |
 | B | 性能条设置窗仍可用主题与开机自启，写回模块 `settings.json` 并经 `StartupShell.UpdateSettings` 应用，形成规格禁止的第二权威；对应测试用 `IsVisible`（窗口未 Show 时恒为 false）属无效断言 | 规格 | 缺陷 | `SettingsWindow` 增加“由套件托管”开关（默认托管），托管时两行 `Collapsed`、控件不回写；`PerfMonitorModule` 在套件路径强制 `Theme = EffectiveTheme`、`Autostart = false`，并在启动时归一旧字段；测试改为断言行 `Visibility` 与落盘值 |
 | C | 剪贴板只在高对比度与明暗之间二选一，全局无 `HighContrast` 引用，系统高对比度下仍用普通配色 | 规格 | 缺陷 | 新增 `Themes/HighContrast.xaml`（与明暗键集合完全一致，取值来自 `SystemColors`）、纯函数 `ClipboardThemeSelection`、运行期订阅 `SystemParameters.StaticPropertyChanged` 并在 `StopAsync` 退订 |
 | D | 安装器两处硬编码 `%LOCALAPPDATA%\ToolSuite` 文案 | 标准 | 一致性改进 | 改用 `SuiteIdentity.DataFolderName` 组合，用户可见文案不变 |
@@ -39,8 +39,13 @@
 1. **A 安装器事务**
    - 红：新增“升级写卸载登记失败”“全新安装写快捷方式失败”“回滚自身失败”三条检查，先失败于
      `升级失败必须把旧版本文件恢复到原安装目录`（旧实现已删除 `previous`）。
-   - 绿：`InstallerEngine.Install` 记录 `installed/completed` 状态，失败进入 `RollBack`；回滚失败抛
+   - 绿：`InstallerEngine.Install` 记录 `installed/completed` 状态，失败进入 `RollBack`；文件恢复失败抛
      `InvalidOperationException`（内部异常为原始异常，消息含残留位置）。三条检查通过。
+   - 复核补强（第二轮）：回滚只恢复文件会让失败升级后的“已安装的应用”条目消失，属修复自身留下的
+     退化。先收紧断言至“卸载登记与快捷方式按旧版本还原”（红：`升级失败必须把卸载登记恢复为旧安装`），
+     再在 `RollBack` 中按 `version.txt` 记录的旧版本重建登记与快捷方式，并把“文件恢复失败”
+     （回滚未完成）与“登记/快捷方式还原失败”（次生失败）分开上报；失败注入改为一次性瞬时写入错误，
+     与“登记持续不可写”区分。17 条安装器检查通过。
 2. **B 性能条设置托管**
    - 红：新增 `SettingsWindow(..., suiteManaged: false)` 用例与“套件运行路径落盘”用例，先以
      `SettingsWindow 没有名为 suiteManaged 的参数` 失败；随后把原 `IsVisible` 断言改为两行
@@ -75,7 +80,7 @@
 | `dotnet tests/ToolSuite.SuiteChecks/bin/Release/net10.0-windows/ToolSuite.SuiteChecks.dll <临时目录>` | **15 项 + 1 汇总 = 16 行 PASS**（基线 14 条，新增 1 条单一真源检查），退出码 0 |
 | `dotnet tests/ToolSuite.LifecycleChecks/bin/Release/net10.0-windows/ToolSuite.LifecycleChecks.dll <临时目录>` | **41 项 + 5 组汇总 = 46 行**，退出码 0（工单 07 记录为 40 条；该检查程序未改动，属既有计数口径差异） |
 | `dotnet tests/ToolSuite.InstallerChecks/bin/Release/net10.0-windows/ToolSuite.InstallerChecks.dll <临时目录>` | **16 项 + 1 汇总 = 17 行 PASS**（基线 13 条，新增 3 条回滚检查），退出码 0 |
-| `dotnet modules/Pinto/tests/Pinto.Checks/bin/Release/net10.0-windows/Pinto.Checks.dll <临时目录>` | **24 项通过**（另 1 行结果目录摘要），退出码 0 |
+| `dotnet modules/Pinto/tests/Pinto.Checks/bin/Release/net10.0/Pinto.Checks.dll <临时目录>` | **24 项通过**（另 1 行结果目录摘要），退出码 0 |
 | `dotnet .../Pinto.ModuleChecks.dll <临时目录>` | **20 项通过**（另 1 行汇总），退出码 0 |
 | `dotnet .../Pinto.DesktopChecks.dll <临时目录>` | **77 项通过**，退出码 0（基线 77） |
 | `./scripts/verify-host.ps1`（`DOTNET_ROOT` 指向 10.0.402 SDK） | 通过，输出“通过，隔离检查产物：artifacts/host-check-…”，`verification-passed.txt` 已生成 |
@@ -84,10 +89,28 @@
 未执行 `scripts/build-installer.ps1`（打包由协调方在合并后执行），未写真实开机启动项，
 未触碰 `%LOCALAPPDATA%\ToolSuite`。
 
+### 4.1 协调方独立复验与其间的一次环境干扰
+
+合并前由协调方在同一工作树独立重跑全部入口，结果与上表一致（构建 0 警告 0 错误；481 / 161 / 50 / 24；
+HostChecks 4、ClipboardChecks 8、SuiteChecks 16 行、LifecycleChecks 46 行、InstallerChecks 17 行、
+Pinto 24 / 20 / 77）。
+
+首轮批量运行时出现过两次非确定性失败，已定位为环境干扰而非实现缺陷，未改断言、未加跳过：
+
+- `ClipboardUiChecks` 失败于 `real global shortcut summons`，`SuiteChecks` 失败于
+  `停用工具应能打开离线设置`。
+- 当时系统中存在一个 21:00 启动的遗留 `ClipboardTool.exe` 进程（前一轮验证留下的实例，
+  仍可能占用 `Ctrl+Shift+V` 并影响前台窗口与离线设置窗口的创建）。
+- 处置：同一工作树按原顺序复跑两次，两项均通过（`ClipboardUiChecks` 5 PASS、`SuiteChecks` 16 行 PASS）；
+  另在独立基线工作树（`e0ac68b`）上复跑 `SuiteChecks` 亦通过，确认与本次改动无关。
+- 结论：这两项检查对残留的热键占用与前台窗口敏感，复验前应确认没有遗留 `ClipboardTool.exe`
+  / `ToolSuite.exe` 进程；该敏感性属既有检查设计，不在本次修复范围内。
+
 ## 5. 已知影响与取舍
 
-- **A**：失败的升级按工单 08 要求清理“可能半写的卸载登记”，因此旧安装虽已恢复，但“已安装的应用”
-  里不再有该条目；重新安装或再次升级一次即可恢复登记。已在[交付说明](../handoff.md)写明。
+- **A**：失败的升级会恢复旧安装的文件、版本号、卸载登记与快捷方式，用户看到的是旧版本仍可用；
+  仅当登记本身持续不可写（如注册表被策略锁定）时，“已安装的应用”条目可能缺失，旧文件仍已恢复，
+  重新安装或再次升级一次即可补齐登记。已在[交付说明](../handoff.md)写明。
 - **B**：性能条 `settings.json` 里的 `theme`/`autostart` 仍保留为兼容字段，启动时归一为套件有效主题
   与关闭自启；用户可见变化是设置窗不再有这两行。
 - **C**：高对比度字典会随系统高对比度切换重新挂载；未在字典里写死任何品牌色，避免成为第二套视觉设计。
