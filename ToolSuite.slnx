@@ -15,5 +15,12 @@
     <Project Path="modules/PerfMonitor/tests/PerfMonitor.Windows.Tests/PerfMonitor.Windows.Tests.csproj" />
     <Project Path="modules/PerfMonitor/tests/PerfMonitor.App.Tests/PerfMonitor.App.Tests.csproj" />
   </Folder>
+  <Folder Name="/modules/Pinto/">
+    <Project Path="modules/Pinto/src/Pinto.Core/Pinto.Core.csproj" />
+    <Project Path="modules/Pinto/src/Pinto/Pinto.csproj" />
+    <Project Path="modules/Pinto/tests/Pinto.Checks/Pinto.Checks.csproj" />
+    <Project Path="modules/Pinto/tests/Pinto.DesktopChecks/Pinto.DesktopChecks.csproj" />
+    <Project Path="modules/Pinto/tests/Pinto.ModuleChecks/Pinto.ModuleChecks.csproj" />
+  </Folder>
   <Folder Name="/checks/"><Project Path="tests/ToolSuite.ClipboardUiChecks/ToolSuite.ClipboardUiChecks.csproj" /><Project Path="tests/ToolSuite.ClipboardChecks/ToolSuite.ClipboardChecks.csproj" /></Folder>
 </Solution>

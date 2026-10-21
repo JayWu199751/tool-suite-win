@@ -1,0 +1,24 @@
+<Window x:Class="Pinto.Views.ImportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="导入备份" Width="460" MaxHeight="{x:Static SystemParameters.PrimaryScreenHeight}" SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource SolidSurfaceBrush}" FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource BodyFontSize}" Foreground="{DynamicResource TextBrush}"
+        UseLayoutRounding="True" KeyboardNavigation.TabNavigation="Cycle">
+    <!-- 使用 Windows 标准窗口框架；滚动正文与固定取消按钮适应大字号。 -->
+    <Grid Margin="{DynamicResource DialogInset}">
+        <Grid.RowDefinitions><RowDefinition /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <TextBlock Text="导入便签备份" FontSize="{DynamicResource DisplayFontSize}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                <TextBlock x:Name="Summary" Foreground="{DynamicResource SecondaryBrush}" Margin="0,8,0,24" TextWrapping="Wrap" />
+                <Button x:Name="AppendButton" Style="{StaticResource DialogButton}" Click="Append_Click" HorizontalContentAlignment="Left" IsDefault="True" AutomationProperties.Name="追加导入" AutomationProperties.HelpText="保留当前便签，将备份作为独立副本加入">
+                    <StackPanel><TextBlock Text="追加导入" FontWeight="SemiBold" /><TextBlock Text="保留当前便签，将备份作为独立副本加入。" FontSize="{DynamicResource CaptionFontSize}" Foreground="{DynamicResource SecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap" /></StackPanel>
+                </Button>
+                <Button x:Name="ReplaceButton" Style="{StaticResource DialogButton}" Click="Replace_Click" HorizontalContentAlignment="Left" Margin="0,8,0,0" AutomationProperties.Name="替换全部" AutomationProperties.HelpText="替换当前所有便签，执行前确认并自动保留备份">
+                    <StackPanel><TextBlock Text="替换全部…" FontWeight="SemiBold" /><TextBlock Text="替换当前所有便签，执行前自动保留备份。" FontSize="{DynamicResource CaptionFontSize}" Foreground="{DynamicResource SecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap" /></StackPanel>
+                </Button>
+                <TextBlock Text="两种方式均保留当前主题与开机启动设置。" FontSize="{DynamicResource CaptionFontSize}" Foreground="{DynamicResource SecondaryBrush}" Margin="0,16,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+        <Button Grid.Row="1" Content="取消" Style="{StaticResource DialogButton}" IsCancel="True" HorizontalAlignment="Right" MinWidth="80" Margin="0,24,0,0" />
+    </Grid>
+</Window>

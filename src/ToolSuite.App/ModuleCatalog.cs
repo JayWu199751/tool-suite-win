@@ -9,6 +9,7 @@ public static class ModuleCatalog
     public static IReadOnlyList<IToolModule> CreateModules() =>
     [
         new ClipboardTool.Presentation.Wpf.ClipboardModule(),
-        new PerfMonitor.App.PerfMonitorModule()
+        new PerfMonitor.App.PerfMonitorModule(),
+        new Pinto.PintoModule()
     ];
 }

@@ -1,0 +1,80 @@
+<Window x:Class="Pinto.Views.NoteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="{Binding Title}" Width="324" Height="273" MinWidth="252" MinHeight="198"
+        WindowStyle="None" ResizeMode="CanResize" ShowInTaskbar="False" Topmost="False" AllowsTransparency="True"
+        Background="Transparent" FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource BodyFontSize}"
+        Foreground="{DynamicResource TextBrush}" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        PreviewKeyDown="Window_PreviewKeyDown" StateChanged="Window_StateChanged"
+        AutomationProperties.Name="Pinto 便签" KeyboardNavigation.TabNavigation="Cycle">
+    <shell:WindowChrome.WindowChrome>
+        <!-- 单一表面绘制圆角，WindowChrome 保留 Windows 边缘缩放行为。 -->
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+    <Border x:Name="Surface" CornerRadius="{DynamicResource WindowRadius}" Background="{DynamicResource SurfaceBrush}" BorderThickness="1">
+        <Border.Style><Style TargetType="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Style.Triggers><DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource ActiveBorderBrush}" /></DataTrigger></Style.Triggers>
+        </Style></Border.Style>
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <Grid x:Name="TitleBar" MinHeight="48" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <Grid Margin="20,8,8,8" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleLabel" Text="{Binding Title}" FontSize="{DynamicResource TitleFontSize}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}" AutomationProperties.HelpText="双击或按 F2 修改标题，右键打开便签菜单">
+                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Visible" /><Style.Triggers><DataTrigger Binding="{Binding IsTitleEditing}" Value="True"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                    </TextBlock>
+                    <TextBox x:Name="TitleEditor" Text="{Binding TitleDraft, UpdateSourceTrigger=PropertyChanged}" FontSize="{DynamicResource TitleFontSize}" FontWeight="SemiBold" Margin="-5,0,0,0" MaxLength="200" Visibility="{Binding IsTitleEditing, Converter={StaticResource BoolToVisibility}}" IsVisibleChanged="Editor_IsVisibleChanged" KeyDown="TitleEditor_KeyDown" LostKeyboardFocus="TitleEditor_LostKeyboardFocus" AutomationProperties.Name="便签标题" />
+                </Grid>
+                <Button x:Name="HideButton" Grid.Column="1" Width="32" Height="32" Margin="0,8,8,8" VerticalAlignment="Top" Style="{StaticResource CloseButton}" Click="Hide_Click" ToolTip="隐藏便签 · Ctrl+W" AutomationProperties.Name="隐藏便签" />
+            </Grid>
+            <Grid Grid.Row="1" Margin="12,0,12,8">
+                <ScrollViewer x:Name="ItemsScroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly" Focusable="False">
+                    <Grid>
+                        <ItemsControl x:Name="ItemsList" ItemsSource="{Binding Items}" AllowDrop="True" PreviewMouseLeftButtonDown="Items_PreviewMouseLeftButtonDown" PreviewMouseMove="Items_PreviewMouseMove" DragOver="Items_DragOver" Drop="Items_Drop">
+                            <ItemsControl.ItemTemplate><DataTemplate>
+                                <Border x:Name="ItemRow" Background="Transparent" CornerRadius="{DynamicResource ControlRadius}" Padding="{DynamicResource RowPadding}" MinHeight="{DynamicResource RowMinHeight}" MouseLeftButtonDown="Item_MouseLeftButtonDown" ContextMenuOpening="Item_ContextMenuOpening">
+                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="8" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                                        <CheckBox Style="{StaticResource CheckCircle}" IsChecked="{Binding IsCompleted, Mode=TwoWay}" Foreground="{Binding DataContext.CheckmarkBrush, RelativeSource={RelativeSource AncestorType=Window}}" VerticalAlignment="Top" AutomationProperties.Name="{Binding Text}" AutomationProperties.HelpText="空格切换完成状态；Alt 加上下方向键排序；Shift+F10 打开项目菜单" ToolTip="标记完成 / 未完成" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" Padding="0,3">
+                                            <TextBlock.Style><Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsCompleted}" Value="True"><Setter Property="Foreground" Value="{DynamicResource CompletedBrush}" /><Setter Property="TextDecorations" Value="Strikethrough" /></DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsEditing}" Value="True"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                                                </Style.Triggers>
+                                            </Style></TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBox Grid.Column="2" Text="{Binding Draft, UpdateSourceTrigger=PropertyChanged}" MaxLength="50000" TextWrapping="Wrap" AcceptsReturn="False" VerticalAlignment="Center" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}" IsVisibleChanged="Editor_IsVisibleChanged" KeyDown="ItemEditor_KeyDown" LostKeyboardFocus="ItemEditor_LostKeyboardFocus" Background="{DynamicResource InputBrush}" Margin="-5,0,0,0" AutomationProperties.Name="编辑清单项" />
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="ItemRow" Property="IsMouseOver" Value="True"><Setter TargetName="ItemRow" Property="Background" Value="{DynamicResource HoverBrush}" /></Trigger>
+                                    <Trigger SourceName="ItemRow" Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="ItemRow" Property="Background" Value="{DynamicResource HoverBrush}" /></Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <StackPanel VerticalAlignment="Center" IsHitTestVisible="False" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" Margin="8,12">
+                            <TextBlock Text="记下接下来要做的事" Foreground="{DynamicResource SecondaryBrush}" TextAlignment="Center" TextWrapping="Wrap" />
+                            <TextBlock Text="在下方输入，按 Enter 添加" Foreground="{DynamicResource SecondaryBrush}" FontSize="{DynamicResource CaptionFontSize}" Margin="0,8,0,0" TextAlignment="Center" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+            <Border x:Name="AddItemBorder" Grid.Row="2" Margin="{DynamicResource WindowInset}" Background="{DynamicResource InputBrush}" BorderThickness="1" CornerRadius="{DynamicResource InputRadius}" MinHeight="38">
+                <Border.Style><Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+                    <Style.Triggers><Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource FocusBrush}" /></Trigger></Style.Triggers>
+                </Style></Border.Style>
+                <Grid Margin="0,2,12,2"><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="8" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                    <Button Style="{StaticResource QuietButton}" Click="Add_Click" ToolTip="添加清单项 · Enter" AutomationProperties.Name="添加清单项"><Path Data="M1,7 L13,7 M7,1 L7,13" Width="14" Height="14" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" /></Button>
+                    <Grid Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="添加新事项…" Foreground="{DynamicResource SecondaryBrush}" IsHitTestVisible="False" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding NewItemText}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+                        <TextBox x:Name="NewItemEditor" Style="{StaticResource ComposerEditor}" Text="{Binding NewItemText, UpdateSourceTrigger=PropertyChanged}" MaxLength="50000" KeyDown="NewItem_KeyDown" AutomationProperties.Name="新增清单项" AutomationProperties.HelpText="Enter 添加，Esc 清空" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
