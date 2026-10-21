@@ -24,9 +24,9 @@ SDK 固定为 `C:/Users/10854/AppData/Local/Microsoft/dotnet/dotnet.exe`（10.0.
 产物：
 
 - 安装包：`artifacts/installer/ToolSuite-Setup-1.0.0.exe`
-  - 大小：125,905,755 字节（120.1 MB）
-  - SHA-256：`423DDABF127C09D03846250DAFFF684A776F348F84A69D8F064983D6D597793D`
-  - 构建时间：2026-10-21T20:14:43+08:00（`artifacts/installer/build-info.txt`）
+  - 大小：125,912,423 字节（120.1 MB）
+  - SHA-256：`29C084830A2C683561463E133CDAEA9AB9D81F7969A8DE5AAC2D3AE19B3E22F3`
+  - 构建时间：2026-10-21T21:33:52+08:00（`artifacts/installer/build-info.txt`）
 - 发布目录：`artifacts/publish/win-x64`（含 `coreclr.dll`、`hostfxr.dll`、`PresentationFramework.dll`）
 - 载荷：`artifacts/publish/ToolSuite-win-x64.zip`
 - `ToolSuite.runtimeconfig.json` 仅含 `includedFrameworks`，不依赖目标机预装运行时。
@@ -184,3 +184,31 @@ SDK 固定为 `C:/Users/10854/AppData/Local/Microsoft/dotnet/dotnet.exe`（10.0.
 - 冒烟会真实写入并删除 HKCU 卸载登记；进程被强制中断时可能残留 `Uninstall\ToolSuite`，
   需人工清理（脚本发现已有登记时会拒绝运行）。
 - 自动检查以 `dotnet ToolSuite.dll` 运行，未覆盖真实 EXE 的 UAC 路径；该路径只能人工验收。
+
+## 九、合并后复验（代码审查修复并入）
+
+日期：2026-10-21。集成分支 `integration/tool-suite` @ `dd73cb4`（`merge: integrate code-review fixes`），
+审查发现与处置见[代码审查修复记录](code-review-fixes.md)。
+
+本轮是在第一至八节全部通过之后、把审查修复并入集成分支的复验，**不是**重复发布新功能：
+
+| 入口 | 实际结果 |
+| --- | --- |
+| `dotnet build ToolSuite.slnx -c Release` | 成功，**0 警告 0 错误** |
+| `ClipboardTool.Tests`（`Category!=Desktop`） | **481 通过**，0 失败 |
+| `PerfMonitor.Core.Tests` / `Windows.Tests` / `App.Tests` | **161 / 50 / 24 通过**（App 新增 2 条托管检查） |
+| `ToolSuite.HostChecks` / `ClipboardChecks` / `ClipboardUiChecks` | **4 / 8 / 5 PASS**（UI 新增主题字典检查） |
+| `ToolSuite.SuiteChecks` / `LifecycleChecks` / `InstallerChecks` | **16 / 46 / 17 行 PASS**（Suite 新增单一真源检查，Installer 新增 3 条回滚检查） |
+| `Pinto.Checks` / `Pinto.ModuleChecks` / `Pinto.DesktopChecks` | **24 / 20 / 77 通过** |
+| `./scripts/build-installer.ps1` | 成功：自包含发布 + 单文件安装包（120.1 MB，SHA-256 见第一节） |
+| `./scripts/verify-installer.ps1 -Smoke` | 17 条安装器检查全部 PASS，真实静默安装/卸载冒烟通过 |
+| `./scripts/verify-host.ps1` | 通过（隔离数据、启停、失败回滚、退出释放），产物 `artifacts/host-check-6ae4d034…` |
+
+复验期间的一次环境干扰已如实记录：首轮批量运行时 `ClipboardUiChecks`（真实全局快捷键呼出）与
+`SuiteChecks`（停用后打开离线设置）各失败一次，原因为系统中残留一个前一轮验证留下的
+`ClipboardTool.exe` 仍占用热键并影响前台窗口；同一工作树按原顺序复跑两次、并在独立基线工作树
+（`e0ac68b`）复跑 `SuiteChecks` 均通过。未改断言、未加跳过，详见
+[审查修复记录第四节](code-review-fixes.md)。
+
+第五节的未执行人工场景（真实 UAC、真实登录自启、多显示器/DPI、干净机器、真实高对比度目视确认）
+在本轮**仍未执行**，因此不因本节复验而视为通过。
