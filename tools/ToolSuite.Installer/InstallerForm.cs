@@ -65,7 +65,7 @@ internal sealed class InstallerForm : Form
             status.Text = Program.Execute(options, _ => { });
             if (mode == InstallerMode.Uninstall)
             {
-                status.Text += "\r\n工具套件已卸载，用户数据保留在 %LOCALAPPDATA%\\ToolSuite。";
+                status.Text += "\r\n工具套件已卸载，用户数据保留在 %LOCALAPPDATA%\\" + ToolSuite.Core.SuiteIdentity.DataFolderName + "。";
                 // 安装目录会在本进程退出后清理，界面立即关闭。
                 Close();
             }

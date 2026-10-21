@@ -61,7 +61,7 @@ internal static class Program
                 ? self : null;
             engine.Uninstall(install, runningSetup);
             if (runningSetup is not null) ScheduleDelete(install);
-            report("已卸载工具套件，用户数据保留在 %LOCALAPPDATA%\\ToolSuite。");
+            report($"已卸载工具套件，用户数据保留在 %LOCALAPPDATA%\\{SuiteIdentity.DataFolderName}。");
             return "卸载完成";
         }
         var result = engine.Install(OpenPayload, options.InstallDirectory, options.StartMenu, options.Desktop);
