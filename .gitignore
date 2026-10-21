@@ -1,0 +1,10 @@
+.worktrees/
+.tools/
+.packages/
+.dotnet/
+artifacts/
+**/bin/
+**/obj/
+.vs/
+*.user
+*.suo
