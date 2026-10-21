@@ -35,6 +35,7 @@ public sealed class PerfMonitorModule : IToolModule
         Configure(context);
         if (_controller is not null) return Task.CompletedTask;
         CloseOfflineSettings();
+        NormalizeSuiteManagedSettings();
         _host = new WpfStartupShellHost(Store(), context.ReportError);
         try
         {
@@ -83,6 +84,14 @@ public sealed class PerfMonitorModule : IToolModule
             _offlineSettings.ApplySettings(Store().Load() with { Theme = EffectiveTheme, Autostart = false }, false);
     }
     private BarTheme EffectiveTheme => _theme == ThemePreference.Dark ? BarTheme.Dark : BarTheme.Light;
+    /// <summary>套件接管后，模块设置里的主题与自启只保留为兼容字段：启动时归一为套件有效主题且自启关闭。</summary>
+    private void NormalizeSuiteManagedSettings()
+    {
+        var store = Store();
+        var loaded = store.Load();
+        if (loaded.Theme == EffectiveTheme && !loaded.Autostart) return;
+        store.Save(loaded with { Theme = EffectiveTheme, Autostart = false });
+    }
     private WindowsSettingsStore Store() => new(Path.Combine(
         (_context ?? throw new InvalidOperationException("模块尚未配置数据位置。")).DataDirectory, "settings.json"));
     private void OnContextMenu(object? sender, EventArgs e) => _controller?.OnPerformanceBarRightClick();
@@ -100,7 +109,10 @@ public sealed class PerfMonitorModule : IToolModule
         if (_controller is { } controller)
         {
             // 直接使用同一公开设置更新入口；关闭窗口立即释放，不进入旧 App 的隐藏链。
-            _host!.ShowSettingsWindow(controller.Settings, controller.UpdateSettings, controller.RecoveredInvalidSettingsOnStartup);
+            // 主题与自启由套件持有：补丁强制回到套件口径，界面如何都成不了第二权威。
+            _host!.ShowSettingsWindow(controller.Settings with { Theme = EffectiveTheme, Autostart = false },
+                patch => controller.UpdateSettings(patch with { Theme = EffectiveTheme }) with { Autostart = false },
+                controller.RecoveredInvalidSettingsOnStartup);
             return;
         }
         var store = Store();

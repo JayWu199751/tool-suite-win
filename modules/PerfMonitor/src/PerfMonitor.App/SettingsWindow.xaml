@@ -473,7 +473,7 @@
             <Border Style="{StaticResource GroupCardStyle}">
                 <StackPanel>
                     <TextBlock Text="外观" Style="{StaticResource GroupTitleStyle}" />
-                    <Grid Visibility="Collapsed" Style="{StaticResource SettingRowStyle}">
+                    <Grid x:Name="ThemeRow" Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="130" /></Grid.ColumnDefinitions>
                         <TextBlock Text="主题" Style="{StaticResource SettingLabelStyle}" />
                         <ComboBox x:Name="ThemeComboBox" Grid.Column="1" Style="{StaticResource SettingsComboStyle}"
@@ -509,7 +509,7 @@
             <Border Style="{StaticResource GroupCardStyle}">
                 <StackPanel>
                     <TextBlock Text="行为" Style="{StaticResource GroupTitleStyle}" />
-                    <Grid Visibility="Collapsed" Style="{StaticResource SettingRowStyle}">
+                    <Grid x:Name="AutostartRow" Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="开机自启" Style="{StaticResource SettingLabelStyle}" />

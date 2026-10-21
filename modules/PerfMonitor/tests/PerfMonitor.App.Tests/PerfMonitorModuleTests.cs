@@ -94,11 +94,90 @@ public sealed class PerfMonitorModuleTests
             Assert.NotSame(window, rebuilt);
             Assert.False(Assert.IsType<System.Windows.Controls.Primitives.ToggleButton>(rebuilt.FindName("GpuToggle")).IsChecked);
             module.ApplyTheme(ThemePreference.Light);
-            Assert.False(Assert.IsType<System.Windows.Controls.ComboBox>(rebuilt.FindName("ThemeComboBox")).IsVisible);
-            Assert.False(Assert.IsType<System.Windows.Controls.Primitives.ToggleButton>(rebuilt.FindName("AutostartToggle")).IsVisible);
+            Assert.Equal(Visibility.Collapsed, Row(rebuilt, "ThemeRow"));
+            Assert.Equal(Visibility.Collapsed, Row(rebuilt, "AutostartRow"));
+            // 托管时改一次指标：模块自己保存的主题与自启不得偏离套件口径。
+            var gpuAfterTheme = Assert.IsType<System.Windows.Controls.Primitives.ToggleButton>(rebuilt.FindName("GpuToggle"));
+            gpuAfterTheme.IsChecked = true;
+            var managedSettings = new WindowsSettingsStore(Path.Combine(directory, "settings.json")).Load();
+            Assert.Equal(PerfMonitor.Core.Settings.BarTheme.Light, managedSettings.Theme);
+            Assert.False(managedSettings.Autostart);
         }
         finally { await module.StopAsync(default); Directory.Delete(directory, true); }
     });
+
+    [Fact(DisplayName = "套件托管的设置窗隐藏主题与自启行，补丁不携带这两项")]
+    public Task Managed_settings_hide_theme_and_autostart_rows() => OnUiThread(() =>
+    {
+        var patches = new List<SettingsPatch>();
+        var settings = PerformanceSettings.Default;
+        var managed = new SettingsWindow(settings, patch =>
+        {
+            patches.Add(patch);
+            return settings.Apply(patch);
+        }, false, listenForSystemTheme: false);
+        var standalone = new SettingsWindow(settings, patch => settings.Apply(patch),
+            false, listenForSystemTheme: false, suiteManaged: false);
+        try
+        {
+            Assert.Equal(Visibility.Collapsed, Row(managed, "ThemeRow"));
+            Assert.Equal(Visibility.Collapsed, Row(managed, "AutostartRow"));
+            Assert.Equal(Visibility.Visible, Row(standalone, "ThemeRow"));
+            Assert.Equal(Visibility.Visible, Row(standalone, "AutostartRow"));
+
+            var theme = Assert.IsType<System.Windows.Controls.ComboBox>(managed.FindName("ThemeComboBox"));
+            var autostart = Assert.IsType<System.Windows.Controls.Primitives.ToggleButton>(managed.FindName("AutostartToggle"));
+            var gpu = Assert.IsType<System.Windows.Controls.Primitives.ToggleButton>(managed.FindName("GpuToggle"));
+            theme.SelectedValue = "Dark";
+            autostart.IsChecked = true;
+            gpu.IsChecked = false;
+
+            var patch = Assert.Single(patches);
+            Assert.Null(patch.Theme);
+            Assert.Null(patch.Autostart);
+            Assert.False(patch.Metrics?.Gpu ?? true);
+            return Task.CompletedTask;
+        }
+        finally
+        {
+            managed.Close();
+            standalone.Close();
+        }
+    });
+
+    [Fact(DisplayName = "套件运行的设置窗保存指标后主题与自启仍为套件口径")]
+    public Task Suite_settings_keep_suite_owned_theme_and_autostart() => OnUiThread(async () =>
+    {
+        var directory = Path.Combine(AppContext.BaseDirectory, "isolated-data", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var module = new PerfMonitorModule();
+        try
+        {
+            var path = Path.Combine(directory, "settings.json");
+            // 旧模块设置里残留独立主题与自启偏好，套件运行时都不得成为权威。
+            new WindowsSettingsStore(path).Save(PerformanceSettings.Default with
+            {
+                Theme = PerfMonitor.Core.Settings.BarTheme.System,
+                Autostart = true,
+                Metrics = new MetricVisibility { Cpu = false, Memory = false, Gpu = false, Network = false }
+            });
+            await module.StartAsync(new(directory, ThemePreference.Dark, _ => { }), default);
+            await module.Commands.Single(x => x.Id == "settings").ExecuteAsync(default);
+            var window = Windows().OfType<SettingsWindow>().Single();
+            Assert.Equal(Visibility.Collapsed, Row(window, "ThemeRow"));
+            Assert.Equal(Visibility.Collapsed, Row(window, "AutostartRow"));
+
+            Assert.IsType<System.Windows.Controls.Primitives.ToggleButton>(window.FindName("GpuToggle")).IsChecked = true;
+
+            var saved = new WindowsSettingsStore(path).Load();
+            Assert.Equal(PerfMonitor.Core.Settings.BarTheme.Dark, saved.Theme);
+            Assert.False(saved.Autostart);
+        }
+        finally { await module.StopAsync(default); Directory.Delete(directory, true); }
+    });
+
+    private static Visibility Row(SettingsWindow window, string name) =>
+        Assert.IsType<System.Windows.Controls.Grid>(window.FindName(name)).Visibility;
 
     internal static Task OnUiThread(Func<Task> test)
     {
