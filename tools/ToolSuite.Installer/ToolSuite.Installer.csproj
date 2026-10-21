@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ToolSuite.Setup</AssemblyName>
+    <RootNamespace>ToolSuite.Installer</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
+    <PayloadZip Condition="'$(PayloadZip)' == ''">$(MSBuildThisFileDirectory)..\..\artifacts\publish\ToolSuite-win-x64.zip</PayloadZip>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ToolSuite.Installer.Core/ToolSuite.Installer.Core.csproj" />
+    <ProjectReference Include="../../src/ToolSuite.Core/ToolSuite.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(PayloadZip)" LogicalName="ToolSuite.Installer.payload.zip" Condition="Exists('$(PayloadZip)')" />
+  </ItemGroup>
+  <Target Name="RequirePayload" BeforeTargets="PrepareForBuild" Condition="!Exists('$(PayloadZip)')">
+    <Error Text="缺少发布载荷 $(PayloadZip)。请先运行 scripts/build-installer.ps1。" />
+  </Target>
+</Project>

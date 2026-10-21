@@ -48,7 +48,7 @@ internal sealed class SuiteApplication : Application
         try
         {
             // 此模式只检查宿主基础设施；真实三个模块由各模块及整套检查入口验证。
-            controller = new SuiteController(new SuiteSettingsStore(root), verify ? [] : ModuleCatalog.CreateModules());
+            controller = new SuiteController(new SuiteSettingsStore(root), verify ? [] : ModuleCatalog.CreateModules(), CreateAutoStart());
             tray = new TrayHost(controller, ShowSettings, RequestExitAsync);
             theme = new SuiteTheme(controller, Dispatcher);
             // 托盘配色跟随同一有效外观，暗色/高对比度下保持可读。
@@ -73,6 +73,14 @@ internal sealed class SuiteApplication : Application
     {
         if (exiting || settings is null) return;
         settings.Show();
+    }
+    /// <summary>只有从安装后的正式 EXE 运行才注册开机启动；dotnet 宿主路径不能写进 Run 值。</summary>
+    private static ISuiteAutoStart? CreateAutoStart()
+    {
+        var executable = Environment.ProcessPath;
+        if (executable is null || Path.GetFileNameWithoutExtension(executable).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+            return null;
+        return new SuiteAutoStart(new HkcuRunValueStore(), executable);
     }
     private async Task RequestExitAsync()
     {

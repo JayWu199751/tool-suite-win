@@ -10,8 +10,11 @@
 
 `./scripts/verify-host.ps1` 使用隔离数据检查宿主控制入口与真实 WPF 设置/重复启动/退出，产物在 artifacts。正式启动使用 `src/ToolSuite.App/bin/Release/net10.0-windows/ToolSuite.exe`，要求管理员权限；验证脚本不触发 UAC，不修改真实自启。
 
+`./scripts/build-installer.ps1` 生成自包含发布与单文件安装包（`artifacts/publish/`、`artifacts/installer/`）；`./scripts/verify-installer.ps1` 复跑自启/安装器隔离检查并校验产物，加 `-Smoke` 会在 `artifacts/installer-smoke/` 临时目录用真实安装包做静默安装/卸载冒烟（不写开机启动项，发现已有套件卸载登记时拒绝执行）。默认安装到 `%LOCALAPPDATA%/Programs/ToolSuite`，用户数据仍在 `%LOCALAPPDATA%/ToolSuite`，卸载保留数据。
+
 - [模块接入契约](docs/module-integration.md)
 - [工单 01 验证与人工待验项](docs/validation/ticket-01.md)
+- [工单 08 安装包与开机启动验证](docs/validation/ticket-08.md)
 - [原项目来源记录](docs/source-provenance.md)
 
 ## 实施入口

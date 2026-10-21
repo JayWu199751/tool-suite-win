@@ -14,6 +14,14 @@ internal sealed class SettingsWindow : Window
     private readonly ComboBox themes = new() { Margin = new Thickness(0, 6, 0, 12) };
     private readonly Dictionary<string, CheckBox> toggles = new();
     private readonly Dictionary<string, Button> retries = new();
+    private readonly CheckBox startWithWindows = new()
+    {
+        Content = "开机启动（登录后运行已启用的工具）", Margin = new Thickness(0, 4, 0, 4)
+    };
+    private readonly TextBlock autoStartStatus = new()
+    {
+        TextWrapping = TextWrapping.Wrap, Opacity = 0.75, Margin = new Thickness(0, 0, 0, 8)
+    };
     public SettingsWindow(SuiteController controller)
     {
         this.controller = controller;
@@ -33,7 +41,10 @@ internal sealed class SettingsWindow : Window
             catch (Exception ex) { System.Windows.MessageBox.Show(this, ex.Message, "主题保存失败"); themes.SelectedIndex = (int)controller.Settings.Theme; }
         };
         content.Children.Add(themes);
-        content.Children.Add(new TextBlock { Text = "开机启动：关闭（安装与自启工单接入后可设置）", TextWrapping = TextWrapping.Wrap });
+        // 失败只把开关恢复并显示原因，不把失败当成已生效。
+        startWithWindows.Click += (_, _) => controller.SetStartWithWindows(startWithWindows.IsChecked == true);
+        content.Children.Add(startWithWindows);
+        content.Children.Add(autoStartStatus);
         content.Children.Add(new TextBlock { Text = "数据独立保存，不读取原工具的数据。", Margin = new Thickness(0, 12, 0, 0), TextWrapping = TextWrapping.Wrap });
         Content = new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         controller.Changed += Refresh;
@@ -70,10 +81,18 @@ internal sealed class SettingsWindow : Window
             tools.Children.Add(row);
         }
         themes.SelectedIndex = (int)controller.Settings.Theme;
+        startWithWindows.IsChecked = controller.Settings.StartWithWindows;
+        autoStartStatus.Text = controller.AutoStartError is { } error
+            ? "开机启动未生效：" + error
+            : controller.Settings.StartWithWindows
+                ? "登录后只启动已启用的工具，窗口按套件保存的状态恢复。"
+                : "登录后不会自动运行工具套件。";
     }
     internal CheckBox? ToolToggleForVerification(string id) => toggles.GetValueOrDefault(id);
     internal Button? RetryButtonForVerification(string id) => retries.GetValueOrDefault(id);
     internal ComboBox ThemeSelectorForVerification => themes;
+    internal CheckBox StartWithWindowsToggleForVerification => startWithWindows;
+    internal TextBlock AutoStartStatusForVerification => autoStartStatus;
     internal static string StateLabel(ToolStatus tool) => tool.State switch
     {
         ToolState.Unavailable => "尚未接入，此版本不可用；启用偏好已保留。",
