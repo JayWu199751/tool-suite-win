@@ -3,8 +3,7 @@ namespace ToolSuite.Core;
 /// <summary>托盘、设置和整合检查共用的控制入口。它不拥有 WPF 或旧版全局 Application。</summary>
 public sealed class SuiteController
 {
-    private static readonly (string Id, string Name)[] Catalog =
-        [("clipboard", "剪贴板"), ("perf-monitor", "性能条"), ("pinto", "便签")];
+    private static readonly IReadOnlyList<(string Id, string Name)> Catalog = ToolIds.Catalog;
     private readonly SuiteSettingsStore store;
     private readonly Dictionary<string, IToolModule> modules;
     private readonly ISuiteAutoStart? autoStart;

@@ -83,13 +83,7 @@ internal sealed class TrayHost : IDisposable
             foreach (Forms.ToolStripItem child in group.DropDownItems) child.ForeColor = menu.ForeColor;
         }
     }
-    internal static string ShortState(ToolStatus tool) => tool.State switch
-    {
-        ToolState.Running => "运行中",
-        ToolState.Disabled => "已停用",
-        ToolState.Failed => "启动失败",
-        _ => "不可用"
-    };
+    internal static string ShortState(ToolStatus tool) => ToolStateText.Short(tool.State);
     internal Forms.ContextMenuStrip MenuForVerification => menu;
     internal void RefreshMenuForVerification() => RebuildMenu();
     internal void InvokeSettingsMenuForVerification() => menu.Items["settings"]!.PerformClick();

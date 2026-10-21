@@ -22,6 +22,7 @@ internal static class Program
         _app.Startup += async (_,_) => {
             try {
                 var root=Path.GetFullPath(args[0]);
+                ThemeScenario();
                 await TextScenario(Path.Combine(root,"text"));
                 await ImageScenario(Path.Combine(root,"images"));
                 await ThumbnailScenario(Path.Combine(root,"thumbs"));
@@ -31,6 +32,42 @@ internal static class Program
         };
         _app.Run(); return exit;
     }
+
+    /// <summary>主题字典：明暗与高对比度三套键集合完全一致，高对比度优先于明暗偏好（无头可验证）。</summary>
+    static void ThemeScenario()
+    {
+        // 独立真源：规格要求模块在明暗之外保留系统高对比度，token 名单按设计稿固定。
+        var expected = new[]
+        {
+            "Brush.App","Brush.Card","Brush.Input","Brush.Bg.Active",
+            "Brush.Border.Subtle","Brush.Border.Strong","Brush.Border.Selected","Brush.Selection.Background",
+            "Brush.Window.Ring",
+            "Brush.Text.Primary","Brush.Text.Secondary","Brush.Text.Tertiary","Brush.Text.Disabled",
+            "Brush.Accent","Brush.Accent.Text",
+            "Brush.Success","Brush.Error",
+            "Brush.Ring.Soft",
+            "Brush.Thumb.Checker"
+        }.ToHashSet(StringComparer.Ordinal);
+        foreach(var name in new[]{ "Light","Dark","HighContrast" }) {
+            var keys = Keys(LoadDictionary($"/ClipboardTool;component/Themes/{name}.xaml"));
+            Assert(keys.SetEquals(expected),
+                $"{name} 主题键集合必须与设计 token 一致；缺少 {string.Join(",",expected.Except(keys))}，多出 {string.Join(",",keys.Except(expected))}");
+        }
+
+        Assert(ClipboardThemeSelection.NameFor(ThemePreference.Dark,highContrast:false)=="Dark","深色偏好选 Dark");
+        Assert(ClipboardThemeSelection.NameFor(ThemePreference.Light,highContrast:false)=="Light","浅色偏好选 Light");
+        Assert(ClipboardThemeSelection.NameFor(ThemePreference.System,highContrast:false)=="Light","跟随系统且无高对比度时按有效浅色");
+        Assert(ClipboardThemeSelection.NameFor(ThemePreference.Dark,highContrast:true)=="HighContrast","高对比度必须覆盖深色偏好");
+        Assert(ClipboardThemeSelection.NameFor(ThemePreference.System,highContrast:true)=="HighContrast","跟随系统时高对比度仍选 HighContrast");
+        Assert(ClipboardThemeSelection.SourceFor(ThemePreference.Light,highContrast:true).OriginalString
+            .EndsWith("Themes/HighContrast.xaml",StringComparison.Ordinal),"高对比度源必须指向 HighContrast.xaml");
+        Console.WriteLine("PASS 明暗与高对比度主题字典键集合一致，高对比度选择优先于明暗偏好");
+    }
+
+    static ResourceDictionary LoadDictionary(string source) =>
+        new ResourceDictionary { Source = new Uri(source, UriKind.Relative) };
+    static HashSet<string> Keys(ResourceDictionary dictionary)=>
+        dictionary.Keys.Cast<object>().Select(key=>key.ToString()!).ToHashSet(StringComparer.Ordinal);
 
     /// <summary>文字链路（工单 02 基线）：真实列表、全局快捷键、冲突、离线设置、保存失败与重启。</summary>
     static async Task TextScenario(string root)

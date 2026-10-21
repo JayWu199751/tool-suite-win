@@ -26,16 +26,22 @@ public partial class SettingsWindow : Window
     private bool _isSynchronizingControls = true;
     private bool _isListeningForThemeChanges;
     private readonly bool _listenForSystemTheme;
+    /// <summary>由套件托管时，主题与开机自启只有套件一个权威：两行隐藏，控件不回写这两个字段。</summary>
+    private readonly bool _suiteManaged;
 
     public SettingsWindow(
         PerformanceSettings settings,
         Func<SettingsPatch, PerformanceSettings> updateSettings,
-        bool recoveredInvalidSettings, bool listenForSystemTheme = true)
+        bool recoveredInvalidSettings, bool listenForSystemTheme = true, bool suiteManaged = true)
     {
         _listenForSystemTheme = listenForSystemTheme;
+        _suiteManaged = suiteManaged;
         _currentSettings = settings.Validate();
         _updateSettings = updateSettings;
         InitializeComponent();
+        // 主题与自启的可见性只由托管开关决定，不再依赖 XAML 里的固定可见性。
+        ThemeRow.Visibility = _suiteManaged ? Visibility.Collapsed : Visibility.Visible;
+        AutostartRow.Visibility = _suiteManaged ? Visibility.Collapsed : Visibility.Visible;
         _savedMessageTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = SavedMessageDuration
@@ -98,6 +104,12 @@ public partial class SettingsWindow : Window
         }
 
         var enabled = toggle.IsChecked == true;
+        // 开机自启由套件统一管理，托管时该控件即使被程序化改动也不回写。
+        if (behavior == "Autostart" && _suiteManaged)
+        {
+            return;
+        }
+
         var patch = behavior switch
         {
             "Autostart" => new SettingsPatch { Autostart = enabled },
@@ -128,6 +140,11 @@ public partial class SettingsWindow : Window
 
     private void ThemeChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_suiteManaged)
+        {
+            return;
+        }
+
         if (!_isSynchronizingControls && ThemeComboBox.SelectedValue is string themeName
             && Enum.TryParse<BarTheme>(themeName, ignoreCase: false, out var theme))
         {
