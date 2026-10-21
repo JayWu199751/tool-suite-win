@@ -2,7 +2,17 @@
 
 将剪贴板历史、性能条和清单便签整合为一个安装包、一个托盘和一个常驻管理员权限 WPF 宿主，以减少重复基础设施和闲置后台工作为实现方向。
 
-2026-10-21，用户已确认产品行为、功能验证入口，以及九项工单的粒度和依赖。当前已完成规格与工单文档，全部待实施；尚无套件应用代码或构建产物。
+2026-10-21，用户已确认产品行为、功能验证入口，以及九项工单的粒度和依赖。工单 01 已完成独立宿主；三个工具将在后续工单接入，当前界面明确显示尚未接入。
+
+## 构建与隔离检查
+
+需要 Windows 11 x64 与 .NET 10 SDK。在本目录运行 `dotnet build ToolSuite.slnx -c Release`；若 PATH 只有运行时，先把 `DOTNET_ROOT` 指向 SDK 安装根并使用其中的 dotnet.exe。
+
+`./scripts/verify-host.ps1` 使用隔离数据检查宿主控制入口与真实 WPF 设置/重复启动/退出，产物在 artifacts。正式启动使用 `src/ToolSuite.App/bin/Release/net10.0-windows/ToolSuite.exe`，要求管理员权限；验证脚本不触发 UAC，不修改真实自启。
+
+- [模块接入契约](docs/module-integration.md)
+- [工单 01 验证与人工待验项](docs/validation/ticket-01.md)
+- [原项目来源记录](docs/source-provenance.md)
 
 ## 实施入口
 

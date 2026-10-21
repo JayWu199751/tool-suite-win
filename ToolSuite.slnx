@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ToolSuite.App/ToolSuite.App.csproj" />
+    <Project Path="src/ToolSuite.Core/ToolSuite.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ToolSuite.HostChecks/ToolSuite.HostChecks.csproj" />
+  </Folder>
+</Solution>
