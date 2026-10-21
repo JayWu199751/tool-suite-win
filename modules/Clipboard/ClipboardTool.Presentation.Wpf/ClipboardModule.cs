@@ -37,6 +37,7 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
     private SummonKeyRetry? _retry;
     private long _generation;
     private bool _stopping;
+    private ToolSuite.Core.ThemePreference _themePreference = ToolSuite.Core.ThemePreference.Light;
     private Dispatcher Dispatcher => System.Windows.Application.Current.Dispatcher;
     public string Id => "clipboard";
     public string DisplayName => "剪贴板";
@@ -140,6 +141,8 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
         _coordinator = new PanelCoordinator(new PanelModesHost(this), new DispatcherDelayScheduler(Dispatcher));
 
         ApplyTheme(context.Theme);
+        // 宿主只在明暗/高对比度变化时刷新且对模块去重，高对比度的自行感知必须由模块自己完成（规格）。
+        SystemParameters.StaticPropertyChanged += OnSystemParametersChanged;
         // 共享缩略图缓存（T06）：解码 Task.Run 后台线程（结果 Freeze）、回调归队 UI；
         // 双上限（32 张 / 24 MiB）、按 Id 记忆化、失效与代次规则在缓存内部
         _panel.SetThumbnailCache(new ThumbnailCache(
@@ -261,6 +264,8 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
     {
         _stopping = true;
         _generation++;
+        // 静态事件必须退订，避免停用后仍持有模块与窗口。
+        SystemParameters.StaticPropertyChanged -= OnSystemParametersChanged;
         _retry?.Dispose(); _retry = null;
         _captureSuccessTimer?.Stop(); _captureSuccessTimer = null;
         if (_coordinator is not null) _coordinator.Hide(restoreFocus: false);
@@ -281,14 +286,28 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
 
     public void ApplyTheme(ToolSuite.Core.ThemePreference theme)
     {
+        _themePreference = theme;
+        ApplyPanelTheme();
+    }
+
+    /// <summary>按当前系统高对比度状态重挂模块局部字典；宿主只按明暗/高对比度变化刷新，模块自己感知高对比度。</summary>
+    private void ApplyPanelTheme()
+    {
         if (_panel is null) return;
-        var dark = theme == ToolSuite.Core.ThemePreference.Dark;
+        var theme = _themePreference;
         _panel.Resources.MergedDictionaries.Clear();
         _panel.Resources.MergedDictionaries.Add(new ResourceDictionary {
-            Source = new Uri(dark ? "/ClipboardTool;component/Themes/Dark.xaml" : "/ClipboardTool;component/Themes/Light.xaml", UriKind.Relative) });
+            Source = ClipboardThemeSelection.SourceFor(theme, SystemParameters.HighContrast) });
         _panel.Resources["Font.Sans"] = new System.Windows.Media.FontFamily("Microsoft YaHei, Segoe UI");
         _panel.Resources["Font.Mono"] = new System.Windows.Media.FontFamily("Cascadia Code, Consolas");
         _panel.SetThemePreference((_context?.ReadThemePreference?.Invoke() ?? theme) switch { ToolSuite.Core.ThemePreference.System => ThemeKind.System, ToolSuite.Core.ThemePreference.Light => ThemeKind.Light, _ => ThemeKind.Dark });
+    }
+
+    private void OnSystemParametersChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(SystemParameters.HighContrast) || _panel is null) return;
+        if (Dispatcher.CheckAccess()) ApplyPanelTheme();
+        else _ = Dispatcher.BeginInvoke(new Action(ApplyPanelTheme));
     }
 
     private HotkeyCombo ParsedToggle() =>
