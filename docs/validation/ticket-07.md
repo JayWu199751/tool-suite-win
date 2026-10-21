@@ -42,7 +42,7 @@
 新增 `tests/ToolSuite.LifecycleChecks`（控制台，真实 WPF/STA，退出码非零即失败，已加入 `ToolSuite.slnx`）。
 每个场景都经模块/窗口公开入口执行，并用隔离数据根观察结果；不读取私有字段、不做内存测量。
 
-### 便签（40 条中的 18 条）
+### 便签（19 条）
 
 1. 预置一张隐藏便签（含完成项、位置/尺寸）与一张隐藏贴边便签，启动后 `NoteWindow` 数量为 0。
 2. `show-note/<id>` 按需重建：标题、清单文字、完成状态、Left/Top/Width/Height 全部恢复。
@@ -108,6 +108,14 @@ $DOTNET tests/ToolSuite.LifecycleChecks/bin/Release/net10.0-windows/ToolSuite.Li
 $DOTNET modules/Pinto/tests/Pinto.ModuleChecks/bin/Release/net10.0-windows/Pinto.ModuleChecks.dll artifacts/pinto-module
 $DOTNET modules/Pinto/tests/Pinto.DesktopChecks/bin/Release/net10.0-windows/Pinto.DesktopChecks.dll artifacts/pinto-desktop
 ```
+
+## 合并状态
+
+提交后执行 `git merge integration/tool-suite`：集成分支仍停在 `ecfbe76`（ticket 06 尚未并入，
+`ticket/06-controls` 为独立分支），因此本次合并为 no-op。已知 06 的 `ToolSuite.slnx` 在
+`/checks/` 同一行新增 `ToolSuite.SuiteChecks`，与本工单新增的 `ToolSuite.LifecycleChecks` 会形成
+文本冲突；合并时应保留两个项目条目（语义合并）。06 未改动便签模块与本工单新增文件，
+其 `SuiteController` 改动（失败重试前清理、主题变化去重与故障隔离）不影响本工单的模块生命周期。
 
 ## 行为说明
 
