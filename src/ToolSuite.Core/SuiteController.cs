@@ -11,8 +11,11 @@ public sealed class SuiteController
     private readonly Dictionary<string, string?> errors = new();
     private readonly SemaphoreSlim gate = new(1, 1);
     private ThemePreference effectiveTheme = ThemePreference.Light;
+    private ThemePreference? appliedTheme;
     public SuiteSettings Settings { get; }
     public event Action? Changed;
+    /// <summary>主题偏好或有效外观变化时触发；普通命令与启停状态变化不触发，避免无谓重建主题资源。</summary>
+    public event Action? AppearanceChanged;
     public event Action<string>? ErrorReported;
     public SuiteController(SuiteSettingsStore store, IEnumerable<IToolModule> modules)
     {
@@ -41,6 +44,9 @@ public sealed class SuiteController
             var startedHere = false;
             if (enabled && states[id] != ToolState.Running)
             {
+                // 失败模块可能留有部分启动资源；重试前先尽力清理，避免重复窗口与监听。
+                if (states[id] == ToolState.Failed)
+                    try { await module.StopAsync(CancellationToken.None); } catch { /* 原始启动/释放错误优先于清理错误。 */ }
                 try
                 {
                     Directory.CreateDirectory(store.ModuleDirectory(id));
@@ -102,11 +108,23 @@ public sealed class SuiteController
         try { store.Save(Settings); }
         catch { Settings.Theme = previous; throw; }
         Changed?.Invoke();
+        AppearanceChanged?.Invoke();
     }
     public void ApplyEffectiveTheme(ThemePreference theme)
     {
+        // 只在下发给模块的有效外观真正变化时刷新；每个模块的故障隔离，不阻断其他模块。
+        if (appliedTheme == theme) return;
+        appliedTheme = theme;
         effectiveTheme = theme;
-        foreach (var module in modules.Values) module.ApplyTheme(theme);
+        foreach (var (id, module) in modules)
+        {
+            try { module.ApplyTheme(theme); }
+            catch (Exception ex)
+            {
+                errors[id] = "主题刷新失败：" + ex.Message;
+                ReportError($"{module.DisplayName}主题刷新失败：{ex.Message}");
+            }
+        }
     }
     public async Task<bool> PrepareExitAsync(CancellationToken cancellationToken = default)
     {
