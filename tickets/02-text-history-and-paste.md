@@ -4,7 +4,9 @@
 
 **Blocked by:** 01 — 统一宿主与独立数据启动
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+**实施结果：** 剪贴板作为宿主模块接入，默认 `Ctrl+Shift+V` 呼出/收起、统一设置改键与占用冲突提示、文字历史持久化与粘贴回原窗口、停用后停止记录并注销快捷键均已实现。`ClipboardTool.Tests` 481 条（排除桌面类）与 `ToolSuite.ClipboardUiChecks` 文字链路场景通过；真实管理员窗口粘贴与真实按键演示未执行，见[工单 09 验证](../docs/validation/ticket-09.md)。
 
 **规格：** [工具套件合并规格](../spec.md)。主要覆盖用户故事 13 的文字链路及 14、17–19。
 

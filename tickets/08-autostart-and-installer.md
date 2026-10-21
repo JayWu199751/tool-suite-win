@@ -4,7 +4,9 @@
 
 **Blocked by:** 06 — 统一控制、主题与安全退出
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+**实施结果：** 提供自包含单文件安装包（内嵌 .NET 10 桌面运行时）与安装/升级/卸载，统一开机启动默认关闭、只读写 `HKCU\...\Run\ToolSuite.Suite`、失败如实显示并回滚，登录启动只运行已启用工具并恢复隐藏状态。`ToolSuite.InstallerChecks` 13 条与最终安装包静默安装/卸载冒烟通过；真实 UAC、真实登录与干净机器未执行，详见[验证记录](../docs/validation/ticket-08.md)。
 
 **规格：** [工具套件合并规格](../spec.md)。主要覆盖用户故事 1、12、34–36、39。
 

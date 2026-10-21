@@ -4,7 +4,9 @@
 
 **Blocked by:** 02 — 快捷键驱动的文字历史与粘贴
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+**实施结果：** 图片/截图入库、去重与 200 条上限、搜索、置顶、备注、6 秒撤销、清空历史、按可视项与显示尺寸解码缩略图均已接入并修复了清空历史未接线与收起仍解码两处真实缺口。`ToolSuite.ClipboardChecks` 8 条、`ToolSuite.ClipboardUiChecks` 4 条通过；真实系统截图与管理员窗口粘贴未执行，详见[验证记录](../docs/validation/ticket-03.md)。
 
 **规格：** [工具套件合并规格](../spec.md)。主要覆盖用户故事 13、15、16、17、38、40 中的剪贴板行为。
 
