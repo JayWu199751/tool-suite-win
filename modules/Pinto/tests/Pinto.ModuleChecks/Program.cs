@@ -28,19 +28,20 @@ internal static class Program
                 await module.Commands.Single(command => command.Id == "new").ExecuteAsync(default);
                 Check("统一命令新建第二张便签", app.Windows.OfType<NoteWindow>().Count() == 2);
                 await module.Commands.Single(command => command.Id == "hide-all").ExecuteAsync(default);
-                Check("全部隐藏保留内容", app.Windows.OfType<NoteWindow>().All(window => !window.IsVisible));
+                Check("全部隐藏保存后释放窗口并保留内容", !app.Windows.OfType<NoteWindow>().Any() && new DataStore(root).Load().Data.Notes.Count == 2);
                 var hidden = module.Commands.Where(command => command.Id.StartsWith("show-note/")).ToArray();
                 Check("统一托盘动态列出隐藏标题", hidden.Length == 2 && hidden.All(command => command.Label == "新便签"));
                 await hidden[0].ExecuteAsync(default);
-                Check("统一命令恢复指定便签", app.Windows.OfType<NoteWindow>().Count(window => window.IsVisible) == 1);
+                var reopened = app.Windows.OfType<NoteWindow>().Single(window => window.IsVisible);
+                Check("统一命令按需重建并恢复指定便签", reopened.Model.Title == "新便签");
                 await module.PrepareToStopAsync(default);
                 using (var blockedFile = new FileStream(new DataStore(root).StatePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
                 {
-                    note.Close();
-                    Check("保存失败阻止隐藏，保留可恢复窗口", note.IsVisible);
+                    await module.Commands.Single(command => command.Id == "hide-all").ExecuteAsync(default);
+                    Check("保存失败阻止隐藏，保留可恢复窗口", reopened.IsVisible && app.Windows.OfType<NoteWindow>().Count(window => window.IsVisible) == 1);
                     var rejected = false;
                     try { await module.PrepareToStopAsync(default); } catch (IOException) { rejected = true; }
-                    Check("保存失败阻止停用", rejected && note.IsVisible);
+                    Check("保存失败阻止停用", rejected && reopened.IsVisible);
                 }
                 await module.PrepareToStopAsync(default);
                 await module.StopAsync(default);
@@ -52,7 +53,10 @@ internal static class Program
                 await module.StopAsync(default);
                 await module.StartAsync(new ModuleContext(root, SuiteTheme.Light, Console.WriteLine), default);
                 restored = app.Windows.OfType<NoteWindow>().Single(window => window.IsVisible);
-                Check("停用提交新增草稿且重启保持隐藏状态", restored.Model.Items.Single().Text == "停用前尚未提交的清单项" && app.Windows.OfType<NoteWindow>().Count(window => !window.IsVisible) == 1);
+                Check("停用提交新增草稿且重启保持隐藏状态",
+                    restored.Model.Items.Single().Text == "停用前尚未提交的清单项"
+                    && app.Windows.OfType<NoteWindow>().Count() == 1
+                    && new DataStore(root).Load().Data.Notes.Count(note => !note.IsVisible) == 1);
                 await module.PrepareToStopAsync(default);
                 await module.StopAsync(default);
                 var blockedRoot = Path.Combine(root, "blocked-data");
