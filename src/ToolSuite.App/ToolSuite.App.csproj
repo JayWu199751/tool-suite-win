@@ -4,5 +4,5 @@
     <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest><AssemblyName>ToolSuite</AssemblyName>
   </PropertyGroup>
-  <ItemGroup><ProjectReference Include="../ToolSuite.Core/ToolSuite.Core.csproj" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../ToolSuite.Core/ToolSuite.Core.csproj" /><ProjectReference Include="../../modules/Clipboard/ClipboardTool.Presentation.Wpf/ClipboardTool.Presentation.Wpf.csproj" /></ItemGroup>
 </Project>

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>ClipboardTool.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.1" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ClipboardTool.Domain\ClipboardTool.Domain.csproj" />
+    <ProjectReference Include="..\ClipboardTool.Application\ClipboardTool.Application.csproj" />
+    <ProjectReference Include="..\ClipboardTool.Infrastructure.Windows\ClipboardTool.Infrastructure.Windows.csproj" />
+    <!-- F48 无障碍语义测试需要引用 Presentation（AccessibilityNames/ToastAnnouncement/AccessibilityMotion） -->
+    <ProjectReference Include="..\ClipboardTool.Presentation.Wpf\ClipboardTool.Presentation.Wpf.csproj" />
+  </ItemGroup>
+
+  <!-- 样例存档与真实测试 PNG（T03 旧档往返；imagePath 占位符在测试中替换为真实路径） -->
+  <ItemGroup>
+    <None Include="TestAssets\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- legacy 链路固化的参照 DIB/PNG 对（T06 图片身份，P3 原型资产正式化迁入） -->
+  <ItemGroup>
+    <None Include="ReferencePng\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

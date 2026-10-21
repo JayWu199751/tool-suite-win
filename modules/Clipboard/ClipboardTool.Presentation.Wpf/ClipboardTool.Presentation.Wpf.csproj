@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets/ClipboardTool.ico</ApplicationIcon>
+    <RootNamespace>ClipboardTool.Presentation.Wpf</RootNamespace>
+    <AssemblyName>ClipboardTool</AssemblyName>
+    <!-- 清单双形态（F35）：发布 requireAdministrator（直接运行即 UAC），开发 asInvoker -->
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="App.xaml.cs" />
+
+    <InternalsVisibleTo Include="E2eT15" />
+    <ProjectReference Include="../../../src/ToolSuite.Core/ToolSuite.Core.csproj" />
+    <ProjectReference Include="..\ClipboardTool.Application\ClipboardTool.Application.csproj" />
+    <ProjectReference Include="..\ClipboardTool.Domain\ClipboardTool.Domain.csproj" />
+    <ProjectReference Include="..\ClipboardTool.Infrastructure.Windows\ClipboardTool.Infrastructure.Windows.csproj" />
+  </ItemGroup>
+
+</Project>
