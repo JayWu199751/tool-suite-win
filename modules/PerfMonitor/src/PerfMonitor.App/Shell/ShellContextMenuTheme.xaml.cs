@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 using WpfContextMenu = System.Windows.Controls.ContextMenu;
 using WpfMenuItem = System.Windows.Controls.MenuItem;
 using Color = System.Windows.Media.Color;
@@ -10,12 +9,10 @@ namespace PerfMonitor.App.Shell;
 /// 托盘/性能条共享菜单的亮暗主题皮肤：XAML 侧定义模板与默认（暗色）画刷，
 /// Apply(dark) 按有效主题逐键覆盖画刷（同设置窗 ApplyTheme 的模式），
 /// 模板里的 DynamicResource 引用让开着的菜单也即时跟随切换。
+/// 视觉规范要求零投影，菜单不再保留投影留白，定位偏移归零。
 /// </summary>
 public partial class ShellContextMenuTheme : ResourceDictionary
 {
-    /// <summary>投影留白；与 PerformanceBarWindow.ShadowInsetDips 同值。</summary>
-    public const double ShadowInsetDips = 16;
-
     public const string SeparatorStyleKey = "ShellMenuSeparatorStyle";
 
     private const string BackgroundKey = "ShellMenuBackgroundBrush";
@@ -25,7 +22,6 @@ public partial class ShellContextMenuTheme : ResourceDictionary
     private const string HoverKey = "ShellMenuHoverBrush";
     private const string BorderKey = "ShellMenuBorderBrush";
     private const string DividerKey = "ShellMenuDividerBrush";
-    private const string ShadowKey = "ShellMenuShadowEffect";
 
     private readonly WpfContextMenu _menu;
     private bool _dark;
@@ -38,9 +34,8 @@ public partial class ShellContextMenuTheme : ResourceDictionary
         menu.Resources.MergedDictionaries.Add(this);
         menu.Style = (Style)this["ShellMenuRootStyle"];
         menu.ItemContainerStyle = (Style)this["ShellMenuItemStyle"];
-        // 外围 16 DIP 投影留白把 popup 整体撑大：x 方向 ContextMenu 定位含留白，需 -16 补偿回鼠标点；
-        // y 方向 MousePoint 定位不叠加留白（实测 Border 顶 = 鼠标 + VerticalOffset），故归零。
-        menu.HorizontalOffset = -ShadowInsetDips;
+        // 无投影留白：popup 左上角即鼠标点，两个方向的偏移都归零。
+        menu.HorizontalOffset = 0;
         menu.VerticalOffset = 0;
         Apply(dark);
     }
@@ -55,21 +50,13 @@ public partial class ShellContextMenuTheme : ResourceDictionary
 
         _dark = dark;
         _applied = true;
-        _menu.Resources[BackgroundKey] = Brush(dark ? 0xFF121519L : 0xFFF6F7F9L);
-        _menu.Resources[ForegroundKey] = Brush(dark ? 0xFFF3F5F7L : 0xFF1A1D22L);
-        _menu.Resources[SecondaryKey] = Brush(dark ? 0xFF92979FL : 0xFF5F656DL);
-        _menu.Resources[CheckKey] = Brush(dark ? 0xFFF3F5F7L : 0xFF1A1D22L);
+        _menu.Resources[BackgroundKey] = Brush(dark ? 0xFF1D1D1FL : 0xFFFFFFFFL);
+        _menu.Resources[ForegroundKey] = Brush(dark ? 0xFFF5F5F7L : 0xFF1D1D1FL);
+        _menu.Resources[SecondaryKey] = Brush(dark ? 0xFF86868BL : 0xFF63636AL);
+        _menu.Resources[CheckKey] = Brush(0xFF0071E3L);
         _menu.Resources[HoverKey] = Brush(dark ? 0x0FFFFFFFL : 0x0A000000L);
-        _menu.Resources[BorderKey] = Brush(dark ? 0x1AFFFFFFL : 0x1A000000L);
-        _menu.Resources[DividerKey] = Brush(dark ? 0x21FFFFFFL : 0x21000000L);
-        _menu.Resources[ShadowKey] = new DropShadowEffect
-        {
-            Color = Colors.Black,
-            BlurRadius = 9,
-            ShadowDepth = 2,
-            Direction = 270,
-            Opacity = dark ? 0.32 : 0.16
-        };
+        _menu.Resources[BorderKey] = Brush(dark ? 0xFF333336L : 0xFFD6D6D6L);
+        _menu.Resources[DividerKey] = Brush(dark ? 0xFF2A2A2CL : 0xFFE8E8EDL);
     }
 
     /// <summary>勾选行与动作项用正文色，未勾的 checkable 行用标签色。</summary>

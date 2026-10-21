@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="性能小窗 · 设置"
-        Width="380"
-        MinWidth="380"
-        MaxWidth="380"
+        Width="420"
+        MinWidth="420"
+        MaxWidth="420"
         SizeToContent="Height"
-        MinHeight="240"
+        MinHeight="260"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="False"
@@ -17,50 +17,52 @@
         Foreground="{DynamicResource PrimaryTextBrush}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
-    <!-- 压掉原生标题栏并显式使用 12 DIP 外框圆角；关闭玻璃边框以使 CornerRadius 生效，
+    <!-- 压掉原生标题栏并显式使用 20 DIP 外框圆角；关闭玻璃边框以使 CornerRadius 生效，
          窗口区域同时裁切背景。关闭按钮与拖动区由内容区自绘（亮暗跟随主题画刷）。 -->
     <shell:WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" UseAeroCaptionButtons="False"
-                      CornerRadius="12" GlassFrameThickness="0" />
+                      CornerRadius="20" GlassFrameThickness="0" />
     </shell:WindowChrome.WindowChrome>
     <Window.Resources>
+        <!-- 计时器由 ApplyTheme 逐键覆盖；这里的默认值即亮色 token（docs/design-system.md）。 -->
         <SolidColorBrush x:Key="PageBackgroundBrush" Color="#FFF5F5F7" />
         <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFFFF" />
         <SolidColorBrush x:Key="PrimaryTextBrush" Color="#FF1D1D1F" />
-        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#FF707070" />
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#FF63636A" />
         <SolidColorBrush x:Key="AccentBrush" Color="#FF0071E3" />
-        <SolidColorBrush x:Key="ControlBackgroundBrush" Color="#FFE8E8ED" />
-        <SolidColorBrush x:Key="SwitchTrackBrush" Color="#3D787880" />
-        <SolidColorBrush x:Key="DividerBrush" Color="#0F000000" />
-        <SolidColorBrush x:Key="HoverBrush" Color="#FFE0E0E6" />
+        <SolidColorBrush x:Key="ControlBackgroundBrush" Color="#FFF5F5F7" />
+        <SolidColorBrush x:Key="SwitchTrackBrush" Color="#FFE8E8ED" />
+        <SolidColorBrush x:Key="DividerBrush" Color="#FFE8E8ED" />
+        <SolidColorBrush x:Key="HoverBrush" Color="#FFF5F5F7" />
         <SolidColorBrush x:Key="ThumbBrush" Color="#FFFFFFFF" />
 
         <Style x:Key="ControlFocusVisual" TargetType="{x:Type Control}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate>
-                        <Border Margin="-2"
+                        <Border Margin="-3"
                                 BorderBrush="{DynamicResource AccentBrush}"
                                 BorderThickness="2"
-                                CornerRadius="12"
+                                CornerRadius="14"
                                 Background="Transparent" />
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
+        <!-- 卡片：28 DIP 圆角、无描边、无投影；画布与卡片靠色差分层。 -->
         <Style x:Key="GroupCardStyle" TargetType="Border">
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Padding" Value="16,2,16,8" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="CornerRadius" Value="28" />
+            <Setter Property="Padding" Value="20,18,20,18" />
+            <Setter Property="Margin" Value="0,0,0,16" />
         </Style>
 
         <Style x:Key="GroupTitleStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-            <Setter Property="Margin" Value="0,10,0,4" />
+            <Setter Property="Margin" Value="0,0,0,10" />
         </Style>
 
         <Style x:Key="SettingLabelStyle" TargetType="TextBlock">
@@ -70,8 +72,7 @@
         </Style>
 
         <Style x:Key="SettingRowStyle" TargetType="Grid">
-            <Setter Property="MinHeight" Value="32" />
-            <Setter Property="Margin" Value="0,0,0,1" />
+            <Setter Property="MinHeight" Value="40" />
         </Style>
 
         <Style x:Key="SettingsSwitchStyle" TargetType="ToggleButton">
@@ -122,7 +123,7 @@
                                 </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Track" Property="Opacity" Value="0.48" />
+                                <Setter TargetName="Track" Property="Opacity" Value="0.45" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -131,13 +132,13 @@
         </Style>
 
         <Style x:Key="SettingsComboItemStyle" TargetType="ComboBoxItem">
-            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Padding" Value="12,7" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBoxItem">
-                        <Border x:Name="ItemSurface" Padding="{TemplateBinding Padding}" CornerRadius="7"
+                        <Border x:Name="ItemSurface" Padding="{TemplateBinding Padding}" CornerRadius="10"
                                 Background="{TemplateBinding Background}">
                             <ContentPresenter VerticalAlignment="Center" />
                         </Border>
@@ -158,9 +159,9 @@
         </Style>
 
         <Style x:Key="SettingsComboStyle" TargetType="ComboBox">
-            <Setter Property="Height" Value="30" />
-            <Setter Property="Padding" Value="12,4,26,4" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="12,4,28,4" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
             <Setter Property="BorderThickness" Value="0" />
@@ -170,23 +171,23 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <Border x:Name="ComboSurface" Background="{TemplateBinding Background}" CornerRadius="15" />
+                            <Border x:Name="ComboSurface" Background="{TemplateBinding Background}" CornerRadius="16" />
                             <ToggleButton x:Name="DropDownToggle"
                                           Focusable="False" ClickMode="Press"
                                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="Transparent" CornerRadius="15" />
+                                        <Border Background="Transparent" CornerRadius="16" />
                                     </ControlTemplate>
                                 </ToggleButton.Template>
                             </ToggleButton>
-                            <ContentPresenter Margin="12,4,26,4"
+                            <ContentPresenter Margin="12,4,28,4"
                                               VerticalAlignment="Center"
                                               IsHitTestVisible="False"
                                               Content="{TemplateBinding SelectionBoxItem}"
                                               ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                               ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" />
-                            <Path Width="10" Height="6" Margin="0,0,9,0"
+                            <Path Width="10" Height="6" Margin="0,0,10,0"
                                   HorizontalAlignment="Right" VerticalAlignment="Center"
                                   Data="M 0 0 L 5 5 L 10 0"
                                   Stroke="{DynamicResource SecondaryTextBrush}" StrokeThickness="1.6"
@@ -197,8 +198,9 @@
                                    IsOpen="{TemplateBinding IsDropDownOpen}"
                                    Placement="Bottom" PopupAnimation="Fade" StaysOpen="False">
                                 <Border MinWidth="{TemplateBinding ActualWidth}"
-                                        Margin="0,4,0,0" Padding="4"
-                                        Background="{DynamicResource SurfaceBrush}" CornerRadius="10">
+                                        Margin="0,6,0,0" Padding="6"
+                                        Background="{DynamicResource SurfaceBrush}" CornerRadius="16"
+                                        BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1">
                                     <ScrollViewer MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                                   SnapsToDevicePixels="True">
                                         <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
@@ -208,7 +210,7 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ComboSurface" Property="Opacity" Value="0.96" />
+                                <Setter TargetName="ComboSurface" Property="Opacity" Value="0.94" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="ComboSurface" Property="Opacity" Value="0.5" />
@@ -233,7 +235,7 @@
         </Style>
 
         <Style x:Key="SettingsSliderStyle" TargetType="Slider">
-            <Setter Property="Width" Value="130" />
+            <Setter Property="Width" Value="132" />
             <Setter Property="Height" Value="24" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource ControlFocusVisual}" />
             <Setter Property="Template">
@@ -258,8 +260,8 @@
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
                                                 <Ellipse Fill="{DynamicResource ThumbBrush}"
-                                                         Stroke="{DynamicResource ControlBackgroundBrush}"
-                                                         StrokeThickness="0.5" />
+                                                         Stroke="{DynamicResource DividerBrush}"
+                                                         StrokeThickness="1" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -272,8 +274,8 @@
         </Style>
 
         <Style x:Key="CaptionCloseButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="34" />
-            <Setter Property="Height" Value="26" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
@@ -283,7 +285,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="ButtonSurface"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="6">
+                                CornerRadius="14">
                             <TextBlock Text="&#xE8BB;"
                                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        FontSize="11"
@@ -379,22 +381,25 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- 自绘头部：标题行整行可拖动（关闭按钮自行吃掉鼠标事件不会误拖）；内容超高的滚动只发生在下方。 -->
-        <Grid Background="Transparent" MinHeight="46" Margin="0,4,0,0"
+        <!-- 自绘头部：标题 + 说明，整行可拖动（关闭按钮自行吃掉鼠标事件不会误拖）；
+             内容超高的滚动只发生在下方。 -->
+        <Grid Background="Transparent" MinHeight="76" Margin="24,20,24,8"
               MouseLeftButtonDown="HeaderMouseLeftButtonDown">
-            <TextBlock Text="设置" FontSize="21" FontWeight="Bold"
-                       Foreground="{DynamicResource PrimaryTextBrush}"
-                       Margin="16,0,0,0" VerticalAlignment="Bottom" />
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="性能小窗" FontSize="21" FontWeight="SemiBold"
+                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                <TextBlock Text="指标、刷新率与外观" FontSize="12" Margin="0,4,0,0"
+                           Foreground="{DynamicResource SecondaryTextBrush}" />
+            </StackPanel>
             <Button x:Name="CloseWindowButton"
                     Style="{StaticResource CaptionCloseButtonStyle}"
                     HorizontalAlignment="Right" VerticalAlignment="Top"
-                    Margin="0,10,10,0"
                     AutomationProperties.Name="关闭设置窗口"
                     Click="CloseWindowButton_OnClick" />
         </Grid>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="16,4,16,14">
+            <StackPanel Margin="20,0,20,16">
                 <Border Style="{StaticResource GroupCardStyle}">
                 <StackPanel>
                     <TextBlock Text="显示指标" Style="{StaticResource GroupTitleStyle}" />
@@ -405,7 +410,7 @@
                                       Tag="Cpu" Checked="MetricChanged" Unchecked="MetricChanged"
                                       AutomationProperties.Name="CPU 使用率" />
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <TextBlock Text="内存" Style="{StaticResource SettingLabelStyle}" />
@@ -413,7 +418,7 @@
                                       Tag="Memory" Checked="MetricChanged" Unchecked="MetricChanged"
                                       AutomationProperties.Name="内存" />
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -425,7 +430,7 @@
                                       Tag="Gpu" Checked="MetricChanged" Unchecked="MetricChanged"
                                       AutomationProperties.Name="GPU（仅 NVIDIA）" />
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <TextBlock Text="网络" Style="{StaticResource SettingLabelStyle}" />
@@ -433,7 +438,7 @@
                                       Tag="Network" Checked="MetricChanged" Unchecked="MetricChanged"
                                       AutomationProperties.Name="网络" />
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <TextBlock Text="时间" Style="{StaticResource SettingLabelStyle}" />
@@ -457,7 +462,7 @@
                             <ComboBoxItem Content="5 秒" Tag="5000" />
                         </ComboBox>
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="120" /></Grid.ColumnDefinitions>
                         <TextBlock Text="GPU、温度" Style="{StaticResource SettingLabelStyle}" />
@@ -483,24 +488,26 @@
                             <ComboBoxItem Content="亮色" Tag="Light" />
                         </ComboBox>
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border x:Name="ThemeDivider" Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="130" /><ColumnDefinition Width="34" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="132" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <TextBlock Text="背景不透明度" Style="{StaticResource SettingLabelStyle}" />
                         <Slider x:Name="OpacitySlider" Grid.Column="1" Style="{StaticResource SettingsSliderStyle}"
                                 Minimum="0.20" Maximum="1.00" SmallChange="0.05" LargeChange="0.10"
                                 ValueChanged="OpacityChanged" />
                         <TextBlock x:Name="OpacityValueText" Grid.Column="2" HorizontalAlignment="Right"
+                                   FontFamily="Cascadia Mono, Consolas" FontSize="12"
                                    VerticalAlignment="Center" IsHitTestVisible="False" />
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="130" /><ColumnDefinition Width="34" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="132" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <TextBlock Text="字体大小" Style="{StaticResource SettingLabelStyle}" />
                         <Slider x:Name="FontSizeSlider" Grid.Column="1" Style="{StaticResource SettingsSliderStyle}"
                                 Minimum="10" Maximum="18" SmallChange="1" LargeChange="2"
                                 TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="FontSizeChanged" />
                         <TextBlock x:Name="FontSizeValueText" Grid.Column="2" HorizontalAlignment="Right"
+                                   FontFamily="Cascadia Mono, Consolas" FontSize="12"
                                    VerticalAlignment="Center" IsHitTestVisible="False" />
                     </Grid>
                 </StackPanel>
@@ -520,7 +527,7 @@
                                       Tag="Autostart" Checked="BehaviorChanged" Unchecked="BehaviorChanged"
                                       AutomationProperties.Name="开机自启" />
                     </Grid>
-                    <Border Height="0.5" Background="{DynamicResource DividerBrush}" />
+                    <Border x:Name="AutostartDivider" Height="1" Background="{DynamicResource DividerBrush}" />
                     <Grid Style="{StaticResource SettingRowStyle}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="40" /></Grid.ColumnDefinitions>
                         <TextBlock Text="其他应用全屏时自动隐藏" Style="{StaticResource SettingLabelStyle}" />
@@ -531,9 +538,9 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock x:Name="SaveStatusText" Margin="0,2,0,0" HorizontalAlignment="Left"
+            <TextBlock x:Name="SaveStatusText" Margin="4,2,0,0" HorizontalAlignment="Left"
                        Foreground="{DynamicResource AccentBrush}" FontSize="12" />
-        </StackPanel>
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </Window>

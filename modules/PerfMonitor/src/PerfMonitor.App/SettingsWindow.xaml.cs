@@ -39,9 +39,11 @@ public partial class SettingsWindow : Window
         _currentSettings = settings.Validate();
         _updateSettings = updateSettings;
         InitializeComponent();
-        // 主题与自启的可见性只由托管开关决定，不再依赖 XAML 里的固定可见性。
+        // 主题与自启的可见性只由托管开关决定，不再依赖 XAML 里的固定可见性；分隔线随行一起收起。
         ThemeRow.Visibility = _suiteManaged ? Visibility.Collapsed : Visibility.Visible;
         AutostartRow.Visibility = _suiteManaged ? Visibility.Collapsed : Visibility.Visible;
+        ThemeDivider.Visibility = ThemeRow.Visibility;
+        AutostartDivider.Visibility = AutostartRow.Visibility;
         _savedMessageTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = SavedMessageDuration
@@ -227,26 +229,24 @@ public partial class SettingsWindow : Window
     private void ApplyTheme(BarTheme theme)
     {
         var dark = PerformanceBarViewModel.IsDarkEffectiveTheme(theme);
+        // 取值见 docs/design-system.md：纯黑/浅灰画布 + 白/炭黑卡片，单一蓝色用于开关与焦点。
         Resources["PageBackgroundBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x11, 0x11, 0x13) : Color.FromRgb(0xF5, 0xF5, 0xF7));
+            dark ? Color.FromRgb(0x00, 0x00, 0x00) : Color.FromRgb(0xF5, 0xF5, 0xF7));
         Resources["SurfaceBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x1E, 0x1E, 0x21) : Color.FromRgb(0xFF, 0xFF, 0xFF));
+            dark ? Color.FromRgb(0x1D, 0x1D, 0x1F) : Color.FromRgb(0xFF, 0xFF, 0xFF));
         Resources["PrimaryTextBrush"] = CreateBrush(
             dark ? Color.FromRgb(0xF5, 0xF5, 0xF7) : Color.FromRgb(0x1D, 0x1D, 0x1F));
         Resources["SecondaryTextBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0xA1, 0xA1, 0xA6) : Color.FromRgb(0x70, 0x70, 0x70));
-        Resources["AccentBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x29, 0x97, 0xFF) : Color.FromRgb(0x00, 0x71, 0xE3));
+            dark ? Color.FromRgb(0x86, 0x86, 0x8B) : Color.FromRgb(0x63, 0x63, 0x6A));
+        Resources["AccentBrush"] = CreateBrush(Color.FromRgb(0x00, 0x71, 0xE3));
         Resources["ControlBackgroundBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x2C, 0x2C, 0x2E) : Color.FromRgb(0xE8, 0xE8, 0xED));
-        Resources["SwitchTrackBrush"] = CreateBrush(dark
-            ? Color.FromArgb(0x52, 0x78, 0x78, 0x80)
-            : Color.FromArgb(0x3D, 0x78, 0x78, 0x80));
-        Resources["DividerBrush"] = CreateBrush(dark
-            ? Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)
-            : Color.FromArgb(0x0F, 0x00, 0x00, 0x00));
+            dark ? Color.FromRgb(0x2A, 0x2A, 0x2C) : Color.FromRgb(0xF5, 0xF5, 0xF7));
+        Resources["SwitchTrackBrush"] = CreateBrush(
+            dark ? Color.FromRgb(0x3A, 0x3A, 0x3D) : Color.FromRgb(0xE8, 0xE8, 0xED));
+        Resources["DividerBrush"] = CreateBrush(
+            dark ? Color.FromRgb(0x33, 0x33, 0x36) : Color.FromRgb(0xE8, 0xE8, 0xED));
         Resources["HoverBrush"] = CreateBrush(
-            dark ? Color.FromRgb(0x3A, 0x3A, 0x3C) : Color.FromRgb(0xE0, 0xE0, 0xE6));
+            dark ? Color.FromRgb(0x2A, 0x2A, 0x2C) : Color.FromRgb(0xF5, 0xF5, 0xF7));
         Resources["ThumbBrush"] = CreateBrush(Color.FromRgb(0xFF, 0xFF, 0xFF));
     }
 
@@ -323,7 +323,7 @@ public partial class SettingsWindow : Window
     {
         _savedMessageTimer.Stop();
         SaveStatusText.Text = message;
-        SaveStatusText.Foreground = CreateBrush(isError ? Color.FromRgb(0xB4, 0x2B, 0x2B) : Color.FromRgb(0x2A, 0x7D, 0x46));
+        SaveStatusText.Foreground = CreateBrush(isError ? Color.FromRgb(0xC7, 0x26, 0x1F) : Color.FromRgb(0x1D, 0x83, 0x48));
         if (!persistent)
         {
             _savedMessageTimer.Start();

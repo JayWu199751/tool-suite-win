@@ -58,7 +58,7 @@ public sealed class PerformanceBarViewModel : INotifyPropertyChanged
     private Brush _borderBrush = CreateBrush(Color.FromArgb(0x1A, 0xFF, 0xFF, 0xFF));
     private Brush _dividerBrush = CreateBrush(Color.FromArgb(0x21, 0xFF, 0xFF, 0xFF));
     private Brush _hoverBrush = CreateBrush(Color.FromArgb(0x06, 0xFF, 0xFF, 0xFF));
-    private DropShadowEffect? _shadowEffect = CreateShadowEffect(0.32);
+    private DropShadowEffect? _shadowEffect;
     private Brush _downloadTokenBrush = CreateBrush(Color.FromRgb(0x27, 0xAA, 0xFF));
     private Brush _uploadTokenBrush = CreateBrush(Color.FromRgb(0x49, 0xDC, 0x8B));
     private Brush _cpuPercentageBrush = CreateBrush(Color.FromRgb(0xF3, 0xF5, 0xF7));
@@ -122,8 +122,8 @@ public sealed class PerformanceBarViewModel : INotifyPropertyChanged
     public double DividerHeight => _settings.FontSize;
 
     public Thickness CardPadding => _settings.TransparentDisplay
-        ? new Thickness(8, 2, 8, 2)
-        : new Thickness(7, 2, 7, 2);
+        ? new Thickness(10, 2, 10, 2)
+        : new Thickness(12, 3, 12, 3);
 
     public Thickness BorderThickness => _settings.TransparentDisplay ? new Thickness(0) : new Thickness(1);
 
@@ -143,7 +143,7 @@ public sealed class PerformanceBarViewModel : INotifyPropertyChanged
 
     public Brush HoverBrush { get => _hoverBrush; private set => SetField(ref _hoverBrush, value); }
 
-    /// <summary>四周环绕的卡片投影（高斯、偏下）；透明显示下返回 null 关闭。</summary>
+    /// <summary>卡片投影：视觉规范要求零投影，恒为 null（保留绑定以兼容既有视图）。</summary>
     public DropShadowEffect? ShadowEffect { get => _shadowEffect; private set => SetField(ref _shadowEffect, value); }
 
     public Brush CpuPercentageBrush { get => _cpuPercentageBrush; private set => SetField(ref _cpuPercentageBrush, value); }
@@ -326,29 +326,32 @@ public sealed class PerformanceBarViewModel : INotifyPropertyChanged
     {
         var dark = IsDarkEffectiveTheme(_settings.Theme);
         var hide = _settings.TransparentDisplay;
+        // 视觉规范：暗色纯黑画布、亮色纯白画布，层级只靠描边与色差（不使用投影）。
         var background = dark
-            ? Color.FromRgb(0x12, 0x15, 0x19)
-            : Color.FromRgb(0xF6, 0xF7, 0xF9);
+            ? Color.FromRgb(0x00, 0x00, 0x00)
+            : Color.FromRgb(0xFF, 0xFF, 0xFF);
         // 透明显示把背景降到 alpha=1 而不是 0：分层窗口中 alpha=0 像素被系统穿透，
         // 命中区必须留在卡片本身；装饰（描边/分隔/hover/高光/投影）则全部归零隐藏。
         var backgroundAlpha = hide ? (byte)1 : (byte)Math.Round(_settings.Opacity * byte.MaxValue);
         BackgroundBrush = CreateBrush(Color.FromArgb(backgroundAlpha, background.R, background.G, background.B));
 
-        var foreground = dark ? Color.FromRgb(0xF3, 0xF5, 0xF7) : Color.FromRgb(0x1A, 0x1D, 0x22);
+        var foreground = dark ? Color.FromRgb(0xF5, 0xF5, 0xF7) : Color.FromRgb(0x1D, 0x1D, 0x1F);
         ForegroundBrush = CreateBrush(foreground);
         MissingBrush = CreateBrush(Color.FromArgb(0x52, foreground.R, foreground.G, foreground.B));
-        LabelBrush = CreateBrush(dark ? Color.FromRgb(0x92, 0x97, 0x9F) : Color.FromRgb(0x5F, 0x65, 0x6D));
-        TemperatureBrush = CreateBrush(dark ? Color.FromRgb(0x9D, 0xA2, 0xA9) : Color.FromRgb(0x6A, 0x6F, 0x76));
-        _downloadTokenBrush = CreateBrush(dark ? Color.FromRgb(0x27, 0xAA, 0xFF) : Color.FromRgb(0x1C, 0x7E, 0xD6));
-        _uploadTokenBrush = CreateBrush(dark ? Color.FromRgb(0x49, 0xDC, 0x8B) : Color.FromRgb(0x0C, 0xA6, 0x78));
+        LabelBrush = CreateBrush(dark ? Color.FromRgb(0x86, 0x86, 0x8B) : Color.FromRgb(0x63, 0x63, 0x6A));
+        TemperatureBrush = CreateBrush(dark ? Color.FromRgb(0xA1, 0xA1, 0xA6) : Color.FromRgb(0x75, 0x75, 0x7A));
+        // 参考稿把彩色收束为单一蓝色，读数只用中性层次；方向靠 ↓/↑ 字符区分。
+        _downloadTokenBrush = CreateBrush(foreground);
+        _uploadTokenBrush = CreateBrush(dark ? Color.FromRgb(0x86, 0x86, 0x8B) : Color.FromRgb(0x63, 0x63, 0x6A));
 
         BorderBrush = CreateBrush(WithHiddenAlpha(
-            dark ? Color.FromArgb(0x1A, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x1A, 0x00, 0x00, 0x00), hide));
+            dark ? Color.FromRgb(0x33, 0x33, 0x36) : Color.FromRgb(0xD6, 0xD6, 0xD6), hide));
         DividerBrush = CreateBrush(WithHiddenAlpha(
-            dark ? Color.FromArgb(0x21, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x21, 0x00, 0x00, 0x00), hide));
+            dark ? Color.FromRgb(0x2A, 0x2A, 0x2C) : Color.FromRgb(0xE8, 0xE8, 0xED), hide));
         HoverBrush = CreateBrush(WithHiddenAlpha(
-            dark ? Color.FromArgb(0x06, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x08, 0x00, 0x00, 0x00), hide));
-        ShadowEffect = CreateShadowEffect(dark ? 0.32 : 0.16, hide);
+            dark ? Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x0A, 0x00, 0x00, 0x00), hide));
+        // 零投影：参考稿用色差与圆角表达层级，投影一律关闭。
+        ShadowEffect = null;
         UpdateReadingBrushes();
     }
 
@@ -416,27 +419,6 @@ public sealed class PerformanceBarViewModel : INotifyPropertyChanged
     /// <summary>装饰色在透明显示下降为 alpha=0；读数、标签等内容色不受影响。</summary>
     private static Color WithHiddenAlpha(Color color, bool hide) =>
         hide ? Color.FromArgb(0, color.R, color.G, color.B) : color;
-
-    /// <summary>四周环绕投影（html 的 box-shadow 语义）：高斯模糊四向扩散、偏下；
-    /// 可见范围约 3σ + 偏移 ≈ 15.5 DIP，必须完整落在 16 DIP 窗口留白内，超出会在窗口边缘被硬切。</summary>
-    private static DropShadowEffect? CreateShadowEffect(double opacity, bool hide = false)
-    {
-        if (hide)
-        {
-            return null;
-        }
-
-        var effect = new DropShadowEffect
-        {
-            BlurRadius = 9,
-            ShadowDepth = 2,
-            Direction = 270,
-            Color = Colors.Black,
-            Opacity = opacity
-        };
-        effect.Freeze();
-        return effect;
-    }
 
     internal static bool IsDarkSystemTheme()
     {

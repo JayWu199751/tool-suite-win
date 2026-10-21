@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 using System.Runtime.ExceptionServices;
 using System.Windows.Threading;
 using PerfMonitor.App.Shell;
@@ -10,39 +9,39 @@ namespace PerfMonitor.App.Tests;
 
 public sealed class ShellContextMenuThemeTests
 {
-    [Fact(DisplayName = "暗色主题落性能条深色令牌并挂载根/项样式")]
+    [Fact(DisplayName = "暗色主题落性能条深色令牌并挂载根/项样式，且不挂投影")]
     public void Dark_theme_uses_bar_dark_tokens() => RunOnSta(() =>
     {
         var menu = new ContextMenu();
         new ShellContextMenuTheme(menu, dark: true);
 
-        AssertBrush(menu, "ShellMenuBackgroundBrush", 0xFF, 0x12, 0x15, 0x19);
-        AssertBrush(menu, "ShellMenuForegroundBrush", 0xFF, 0xF3, 0xF5, 0xF7);
-        AssertBrush(menu, "ShellMenuSecondaryBrush", 0xFF, 0x92, 0x97, 0x9F);
-        AssertBrush(menu, "ShellMenuCheckBrush", 0xFF, 0xF3, 0xF5, 0xF7);
+        AssertBrush(menu, "ShellMenuBackgroundBrush", 0xFF, 0x1D, 0x1D, 0x1F);
+        AssertBrush(menu, "ShellMenuForegroundBrush", 0xFF, 0xF5, 0xF5, 0xF7);
+        AssertBrush(menu, "ShellMenuSecondaryBrush", 0xFF, 0x86, 0x86, 0x8B);
+        AssertBrush(menu, "ShellMenuCheckBrush", 0xFF, 0x00, 0x71, 0xE3);
         AssertBrush(menu, "ShellMenuHoverBrush", 0x0F, 0xFF, 0xFF, 0xFF);
-        AssertBrush(menu, "ShellMenuBorderBrush", 0x1A, 0xFF, 0xFF, 0xFF);
-        AssertBrush(menu, "ShellMenuDividerBrush", 0x21, 0xFF, 0xFF, 0xFF);
-        Assert.Equal(0.32, Assert.IsType<DropShadowEffect>(menu.Resources["ShellMenuShadowEffect"]).Opacity);
+        AssertBrush(menu, "ShellMenuBorderBrush", 0xFF, 0x33, 0x33, 0x36);
+        AssertBrush(menu, "ShellMenuDividerBrush", 0xFF, 0x2A, 0x2A, 0x2C);
+        // 视觉规范：零投影，菜单不再提供投影资源。
+        Assert.False(menu.Resources.Contains("ShellMenuShadowEffect"));
     });
 
-    [Fact(DisplayName = "亮色主题落推导亮色令牌并降低投影强度")]
+    [Fact(DisplayName = "亮色主题落浅色令牌（白底深字、发丝描边）")]
     public void Light_theme_uses_derived_light_tokens() => RunOnSta(() =>
     {
         var menu = new ContextMenu();
         new ShellContextMenuTheme(menu, dark: false);
 
-        AssertBrush(menu, "ShellMenuBackgroundBrush", 0xFF, 0xF6, 0xF7, 0xF9);
-        AssertBrush(menu, "ShellMenuForegroundBrush", 0xFF, 0x1A, 0x1D, 0x22);
-        AssertBrush(menu, "ShellMenuSecondaryBrush", 0xFF, 0x5F, 0x65, 0x6D);
-        AssertBrush(menu, "ShellMenuCheckBrush", 0xFF, 0x1A, 0x1D, 0x22);
+        AssertBrush(menu, "ShellMenuBackgroundBrush", 0xFF, 0xFF, 0xFF, 0xFF);
+        AssertBrush(menu, "ShellMenuForegroundBrush", 0xFF, 0x1D, 0x1D, 0x1F);
+        AssertBrush(menu, "ShellMenuSecondaryBrush", 0xFF, 0x63, 0x63, 0x6A);
+        AssertBrush(menu, "ShellMenuCheckBrush", 0xFF, 0x00, 0x71, 0xE3);
         AssertBrush(menu, "ShellMenuHoverBrush", 0x0A, 0x00, 0x00, 0x00);
-        AssertBrush(menu, "ShellMenuBorderBrush", 0x1A, 0x00, 0x00, 0x00);
-        AssertBrush(menu, "ShellMenuDividerBrush", 0x21, 0x00, 0x00, 0x00);
-        Assert.Equal(0.16, Assert.IsType<DropShadowEffect>(menu.Resources["ShellMenuShadowEffect"]).Opacity);
+        AssertBrush(menu, "ShellMenuBorderBrush", 0xFF, 0xD6, 0xD6, 0xD6);
+        AssertBrush(menu, "ShellMenuDividerBrush", 0xFF, 0xE8, 0xE8, 0xED);
     });
 
-    [Fact(DisplayName = "构造即挂载根样式、项容器样式与投影落点补偿")]
+    [Fact(DisplayName = "构造即挂载根样式与项容器样式，菜单无投影留白偏移")]
     public void Attach_wires_styles_and_placement_compensation() => RunOnSta(() =>
     {
         var menu = new ContextMenu();
@@ -55,7 +54,7 @@ public sealed class ShellContextMenuThemeTests
             && property == Control.TemplateProperty);
         Assert.NotNull(menu.ItemContainerStyle);
         Assert.Equal(typeof(MenuItem), menu.ItemContainerStyle.TargetType);
-        Assert.Equal(-ShellContextMenuTheme.ShadowInsetDips, menu.HorizontalOffset);
+        Assert.Equal(0, menu.HorizontalOffset);
         Assert.Equal(0, menu.VerticalOffset);
     });
 
@@ -106,7 +105,7 @@ public sealed class ShellContextMenuThemeTests
         theme.Apply(dark: false);
         Assert.NotSame(darkBackground, menu.Resources["ShellMenuBackgroundBrush"]);
         var light = (SolidColorBrush)menu.Resources["ShellMenuBackgroundBrush"];
-        Assert.Equal(Color.FromArgb(0xFF, 0xF6, 0xF7, 0xF9), light.Color);
+        Assert.Equal(Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF), light.Color);
     });
 
     private static void AssertBrush(ContextMenu menu, string key, byte a, byte r, byte g, byte b)

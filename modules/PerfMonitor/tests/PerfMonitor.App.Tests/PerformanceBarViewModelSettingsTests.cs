@@ -48,7 +48,7 @@ public sealed class PerformanceBarViewModelSettingsTests
         }
     }
 
-    [Fact(DisplayName = "深色主题主占用读数与时间同色，缺失回落弱化色")]
+    [Fact(DisplayName = "深色主题主占用读数与时间同色，缺失回落弱化色，卡片零投影")]
     public void Dark_theme_colors_readings_with_preview_tokens()
     {
         var vm = new PerformanceBarViewModel();
@@ -57,19 +57,16 @@ public sealed class PerformanceBarViewModelSettingsTests
             vm.ApplySettings(PerformanceSettings.Default with { Theme = BarTheme.Dark });
 
             var label = Assert.IsType<SolidColorBrush>(vm.LabelBrush);
-            Assert.Equal(Color.FromRgb(0x92, 0x97, 0x9F), label.Color);
-            // 四周环绕投影：深色主题 alpha 0.32，模糊半径完整落在 16 DIP 窗口留白内。
-            var shadow = Assert.IsType<DropShadowEffect>(vm.ShadowEffect);
-            Assert.Equal(0.32, shadow.Opacity);
-            Assert.Equal(9, shadow.BlurRadius);
-            Assert.Equal(2, shadow.ShadowDepth);
+            Assert.Equal(Color.FromRgb(0x86, 0x86, 0x8B), label.Color);
+            // 视觉规范要求零投影：层级只靠色差与圆角，卡片不挂任何 Effect。
+            Assert.Null(vm.ShadowEffect);
 
             vm.SetMetricGeneration(1);
             vm.Apply(new PerformanceMetricsSnapshot(
                 1, CpuPercentage: 9, MemoryPercentage: 51, MemoryUsedGiB: null, MemoryTotalGiB: null,
                 DateTimeOffset.UtcNow));
 
-            Assert.Equal(Color.FromRgb(0xF3, 0xF5, 0xF7), ((SolidColorBrush)vm.ForegroundBrush).Color);
+            Assert.Equal(Color.FromRgb(0xF5, 0xF5, 0xF7), ((SolidColorBrush)vm.ForegroundBrush).Color);
             Assert.Equal(vm.ForegroundBrush, vm.CpuPercentageBrush);
             Assert.Equal(vm.ForegroundBrush, vm.MemoryPercentageBrush);
             // GPU 读数未到达：缺失占位用弱化色，而非零值或主题色。
@@ -81,7 +78,7 @@ public sealed class PerformanceBarViewModelSettingsTests
             Assert.Equal(vm.ForegroundBrush, vm.GpuPercentageBrush);
 
             vm.ApplySettings(PerformanceSettings.Default with { Theme = BarTheme.Light });
-            Assert.Equal(Color.FromRgb(0x1A, 0x1D, 0x22), ((SolidColorBrush)vm.ForegroundBrush).Color);
+            Assert.Equal(Color.FromRgb(0x1D, 0x1D, 0x1F), ((SolidColorBrush)vm.ForegroundBrush).Color);
             Assert.Equal(vm.ForegroundBrush, vm.CpuPercentageBrush);
             Assert.Equal(vm.ForegroundBrush, vm.MemoryPercentageBrush);
             Assert.Equal(vm.ForegroundBrush, vm.GpuPercentageBrush);
@@ -92,7 +89,7 @@ public sealed class PerformanceBarViewModelSettingsTests
         }
     }
 
-    [Fact(DisplayName = "亮色主题主占用读数与时间同色，网络箭头保留彩色")]
+    [Fact(DisplayName = "亮色主题主占用读数与时间同色，网络箭头使用中性层次")]
     public void Light_theme_uses_derived_tokens()
     {
         var vm = new PerformanceBarViewModel();
@@ -101,18 +98,18 @@ public sealed class PerformanceBarViewModelSettingsTests
             vm.ApplySettings(PerformanceSettings.Default with { Theme = BarTheme.Light });
 
             var background = Assert.IsType<SolidColorBrush>(vm.BackgroundBrush);
-            Assert.Equal(Color.FromArgb(0xF5, 0xF6, 0xF7, 0xF9), background.Color);
+            Assert.Equal(Color.FromArgb(0xF5, 0xFF, 0xFF, 0xFF), background.Color);
 
             vm.SetMetricGeneration(1);
             vm.Apply(new PerformanceMetricsSnapshot(
                 1, CpuPercentage: 9, MemoryPercentage: 51, MemoryUsedGiB: null, MemoryTotalGiB: null,
                 DateTimeOffset.UtcNow, GpuPercentage: 42, NetworkUploadMegabytesPerSecond: 1.2));
 
-            Assert.Equal(Color.FromRgb(0x1A, 0x1D, 0x22), ((SolidColorBrush)vm.ForegroundBrush).Color);
+            Assert.Equal(Color.FromRgb(0x1D, 0x1D, 0x1F), ((SolidColorBrush)vm.ForegroundBrush).Color);
             Assert.Equal(vm.ForegroundBrush, vm.CpuPercentageBrush);
             Assert.Equal(vm.ForegroundBrush, vm.MemoryPercentageBrush);
             Assert.Equal(vm.ForegroundBrush, vm.GpuPercentageBrush);
-            Assert.Equal(Color.FromRgb(0x0C, 0xA6, 0x78), ((SolidColorBrush)vm.NetworkUploadArrowBrush).Color);
+            Assert.Equal(Color.FromRgb(0x63, 0x63, 0x6A), ((SolidColorBrush)vm.NetworkUploadArrowBrush).Color);
         }
         finally
         {
