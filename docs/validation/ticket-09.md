@@ -73,10 +73,15 @@ SDK 固定为 `C:/Users/10854/AppData/Local/Microsoft/dotnet/dotnet.exe`（10.0.
 - 归因依据：
   1. 该用例 `Category=Desktop`，依赖真实交互桌面的顶层 z 序与前台窗口；
      当前会话由自动化进程驱动，桌面被其他窗口覆盖，属已知不稳定的桌面条件。
-  2. 工单 03 记录：同一用例在基线 `56a9206` 上同样失败，6 次单独重跑 1 次通过；
+  2. 本轮单独复跑该用例一次（`--filter "FullyQualifiedName~WindowSummonOrderTests"`）：
+     **0 通过 / 2 失败**，`SetWindowPos` 返回成功但 `WindowFromPoint` 仍命中遮挡窗口；
+     同一次运行中“遮挡窗口先被命中”的前置断言通过，说明窗口创建与命中测试正常，
+     差异只出现在置顶 z 序变化是否被当前会话采纳。
+  3. 工单 03 记录：同一用例在基线 `56a9206` 上同样失败，6 次单独重跑 1 次通过；
      工单 07 在 `ecfbe76` 上复现同样 2 条失败。
-  3. 排除桌面类后 481/481 全部通过，说明非桌面规则、存储、热键与粘贴链路未受影响。
+  4. 排除桌面类后 481/481 全部通过，说明非桌面规则、存储、热键与粘贴链路未受影响。
 - 处理：未放宽断言、未加跳过标记、未改判为通过；在交付中标注为未通过并给出复验步骤（见第五节）。
+  若在真实交互桌面复验仍失败，则按真实缺陷调查 `WindowPlacer.PlaceSummonDip` 的置顶重入逻辑。
 - 复验步骤（真实交互桌面）：登录本机桌面、关闭全屏/远程会话，运行
   `dotnet test modules/Clipboard/ClipboardTool.Tests -c Release --no-build --filter "FullyQualifiedName~WindowSummonOrderTests"`，
   期望 2/2 通过；若仍失败，则升级为真实缺陷调查（面板 `SetWindowPos` 与 topmost 恢复逻辑）。
