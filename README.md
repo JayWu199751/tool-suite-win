@@ -10,7 +10,8 @@
 
 ## 快速开始
 
-安装（当前用户，无需管理员权限）：
+安装包由仓库自身构建（`artifacts/` 不入库，先执行下文 `scripts/build-installer.ps1`）。
+安装到当前用户目录，不需要管理员权限：
 
 ```powershell
 & artifacts/installer/ToolSuite-Setup-1.0.0.exe
