@@ -1,22 +1,24 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#232325" />
-    <SolidColorBrush x:Key="SolidSurfaceBrush" Color="#232325" />
-    <SolidColorBrush x:Key="TextBrush" Color="#F2F2F4" />
-    <SolidColorBrush x:Key="SecondaryBrush" Color="#ADADB5" />
-    <SolidColorBrush x:Key="CompletedBrush" Color="#ADADB5" />
-    <SolidColorBrush x:Key="BorderBrush" Color="#454548" />
-    <SolidColorBrush x:Key="ActiveBorderBrush" Color="#76767E" />
-    <SolidColorBrush x:Key="SeparatorBrush" Color="#3B3B3F" />
-    <SolidColorBrush x:Key="InputBrush" Color="#2E2E31" />
-    <SolidColorBrush x:Key="InputBorderBrush" Color="#45454B" />
-    <SolidColorBrush x:Key="HoverBrush" Color="#353539" />
-    <SolidColorBrush x:Key="PressedBrush" Color="#424248" />
-    <SolidColorBrush x:Key="CircleBrush" Color="#ADADB5" />
-    <SolidColorBrush x:Key="FocusBrush" Color="#8EB5FA" />
-    <SolidColorBrush x:Key="SelectionBrush" Color="#375787" />
-    <SolidColorBrush x:Key="SelectionTextBrush" Color="#F2F2F4" />
-    <SolidColorBrush x:Key="DisabledBrush" Color="#8E8E96" />
-    <SolidColorBrush x:Key="CloseHoverBrush" Color="#FF9AA5" />
-    <SolidColorBrush x:Key="ClosePressedBrush" Color="#E98490" />
-    <SolidColorBrush x:Key="CloseForegroundBrush" Color="#232325" />
+    <!-- 暗 token：炭黑卡片浮在桌面之上，层级只靠色差与圆角，不用投影。
+         次要文字取 #93939A：在 Surface/Hover/Input 三种底色上均 ≥ 4.5:1。 -->
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#1D1D1F" />
+    <SolidColorBrush x:Key="SolidSurfaceBrush" Color="#1D1D1F" />
+    <SolidColorBrush x:Key="TextBrush" Color="#F5F5F7" />
+    <SolidColorBrush x:Key="SecondaryBrush" Color="#93939A" />
+    <SolidColorBrush x:Key="CompletedBrush" Color="#93939A" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#333336" />
+    <SolidColorBrush x:Key="ActiveBorderBrush" Color="#4A4A4E" />
+    <SolidColorBrush x:Key="SeparatorBrush" Color="#2A2A2C" />
+    <SolidColorBrush x:Key="InputBrush" Color="#2A2A2C" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#333336" />
+    <SolidColorBrush x:Key="HoverBrush" Color="#2A2A2C" />
+    <SolidColorBrush x:Key="PressedBrush" Color="#333336" />
+    <SolidColorBrush x:Key="CircleBrush" Color="#86868B" />
+    <SolidColorBrush x:Key="FocusBrush" Color="#2997FF" />
+    <SolidColorBrush x:Key="SelectionBrush" Color="#402997FF" />
+    <SolidColorBrush x:Key="SelectionTextBrush" Color="#F5F5F7" />
+    <SolidColorBrush x:Key="DisabledBrush" Color="#55555C" />
+    <SolidColorBrush x:Key="CloseHoverBrush" Color="#2A2A2C" />
+    <SolidColorBrush x:Key="ClosePressedBrush" Color="#333336" />
+    <SolidColorBrush x:Key="CloseForegroundBrush" Color="#F5F5F7" />
 </ResourceDictionary>

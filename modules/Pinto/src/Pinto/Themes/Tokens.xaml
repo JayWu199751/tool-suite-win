@@ -1,20 +1,21 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
-    <!-- Windows 字体与 DIP；字号由 ThemeService 按系统文字缩放更新。 -->
-    <FontFamily x:Key="AppFontFamily">Segoe UI, Microsoft YaHei UI</FontFamily>
-    <sys:Double x:Key="DisplayFontSize">20</sys:Double>
+    <!-- 几何与字号 token：取值见 docs/design-system.md（参考稿字阶在桌面端收一档）。
+         字号由 ThemeService 按系统文字缩放更新。 -->
+    <FontFamily x:Key="AppFontFamily">Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI</FontFamily>
+    <sys:Double x:Key="DisplayFontSize">21</sys:Double>
     <sys:Double x:Key="TitleFontSize">17</sys:Double>
     <sys:Double x:Key="BodyFontSize">14</sys:Double>
     <sys:Double x:Key="UtilityFontSize">13</sys:Double>
     <sys:Double x:Key="CaptionFontSize">12</sys:Double>
-    <CornerRadius x:Key="WindowRadius">14</CornerRadius>
-    <CornerRadius x:Key="InputRadius">8</CornerRadius>
-    <CornerRadius x:Key="ControlRadius">6</CornerRadius>
-    <Thickness x:Key="WindowInset">16,0,16,16</Thickness>
-    <Thickness x:Key="RowPadding">4</Thickness>
-    <Thickness x:Key="DialogInset">24</Thickness>
+    <CornerRadius x:Key="WindowRadius">24</CornerRadius>
+    <CornerRadius x:Key="InputRadius">18</CornerRadius>
+    <CornerRadius x:Key="ControlRadius">10</CornerRadius>
+    <Thickness x:Key="WindowInset">18,0,18,18</Thickness>
+    <Thickness x:Key="RowPadding">5</Thickness>
+    <Thickness x:Key="DialogInset">28</Thickness>
     <Thickness x:Key="ButtonPadding">16,8</Thickness>
     <sys:Double x:Key="ControlSize">28</sys:Double>
-    <sys:Double x:Key="RowMinHeight">36</sys:Double>
+    <sys:Double x:Key="RowMinHeight">40</sys:Double>
 </ResourceDictionary>
