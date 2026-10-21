@@ -11,6 +11,9 @@ internal sealed class SettingsWindow : Window
 {
     private readonly SuiteController controller;
     private readonly StackPanel tools = new() { Margin = new Thickness(0, 20, 0, 16) };
+    private readonly ComboBox themes = new() { Margin = new Thickness(0, 6, 0, 12) };
+    private readonly Dictionary<string, CheckBox> toggles = new();
+    private readonly Dictionary<string, Button> retries = new();
     public SettingsWindow(SuiteController controller)
     {
         this.controller = controller;
@@ -22,7 +25,6 @@ internal sealed class SettingsWindow : Window
         content.Children.Add(new TextBlock { Text = "工具套件", FontSize = 24 });
         content.Children.Add(tools);
         content.Children.Add(new TextBlock { Text = "主题" });
-        var themes = new ComboBox { Margin = new Thickness(0, 6, 0, 12) };
         foreach (var label in new[] { "跟随系统", "浅色", "深色" }) themes.Items.Add(label);
         themes.SelectedIndex = (int)controller.Settings.Theme;
         themes.SelectionChanged += (_, _) =>
@@ -41,13 +43,24 @@ internal sealed class SettingsWindow : Window
     private void Refresh()
     {
         tools.Children.Clear();
+        toggles.Clear();
+        retries.Clear();
         foreach (var tool in controller.Tools)
         {
             var row = new StackPanel { Margin = new Thickness(0, 0, 0, 12) };
             var enabled = new CheckBox { Content = tool.DisplayName, IsChecked = tool.Enabled, IsEnabled = tool.State != ToolState.Unavailable };
             enabled.Click += async (_, _) => await controller.SetEnabledAsync(tool.Id, enabled.IsChecked == true);
+            toggles[tool.Id] = enabled;
             row.Children.Add(enabled);
             row.Children.Add(new TextBlock { Text = StateLabel(tool), Margin = new Thickness(20, 4, 0, 0), TextWrapping = TextWrapping.Wrap });
+            if (tool.State == ToolState.Failed)
+            {
+                // 失败不伪装运行：给出可操作提示，并可原地重试启用（重试前由控制器清理残留）。
+                var retry = new Button { Content = "重试启动", HorizontalAlignment = System.Windows.HorizontalAlignment.Left, Margin = new Thickness(20, 4, 0, 0) };
+                retry.Click += async (_, _) => await controller.SetEnabledAsync(tool.Id, true);
+                retries[tool.Id] = retry;
+                row.Children.Add(retry);
+            }
             foreach (var command in tool.Commands.Where(c => !c.RequiresRunning))
             {
                 var button = new Button { Content = command.Label, HorizontalAlignment = System.Windows.HorizontalAlignment.Left, Margin = new Thickness(20, 4, 0, 0) };
@@ -56,7 +69,11 @@ internal sealed class SettingsWindow : Window
             }
             tools.Children.Add(row);
         }
+        themes.SelectedIndex = (int)controller.Settings.Theme;
     }
+    internal CheckBox? ToolToggleForVerification(string id) => toggles.GetValueOrDefault(id);
+    internal Button? RetryButtonForVerification(string id) => retries.GetValueOrDefault(id);
+    internal ComboBox ThemeSelectorForVerification => themes;
     internal static string StateLabel(ToolStatus tool) => tool.State switch
     {
         ToolState.Unavailable => "尚未接入，此版本不可用；启用偏好已保留。",
