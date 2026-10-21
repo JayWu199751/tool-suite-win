@@ -26,6 +26,7 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     private string _noteDraft = string.Empty;
     private PanelMode _footerMode = PanelMode.Browse;
     private bool _footerCompact;
+    private bool _thumbnailsEnabled;
 
     public ObservableCollection<CardViewModel> Items { get; } = [];
 
@@ -205,6 +206,19 @@ public sealed class PanelViewModel : INotifyPropertyChanged
     /// 已消失的 id 在此立即失效（移除/裁剪/清空统一走 Reload 差量）。
     /// </summary>
     public Infrastructure.Windows.ThumbnailCache? Thumbnails { get; private set; }
+
+    /// <summary>缩略图加载闸门：只有面板实际可见（已呼出）时为 true。停靠时新增历史或容器换绑
+    /// 都不会解码图片，呼出时置 true 由缩略图宿主补取已实现容器（T06 低内存要求）。</summary>
+    public bool ThumbnailsEnabled
+    {
+        get => _thumbnailsEnabled;
+        set
+        {
+            if (_thumbnailsEnabled == value) return;
+            _thumbnailsEnabled = value;
+            OnPropertyChanged();
+        }
+    }
 
     public void SetThumbnailCache(Infrastructure.Windows.ThumbnailCache cache)
     {

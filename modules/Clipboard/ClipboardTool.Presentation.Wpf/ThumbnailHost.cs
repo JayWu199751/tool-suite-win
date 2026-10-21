@@ -28,6 +28,14 @@ public sealed class ThumbnailHost : Border
         nameof(Cache), typeof(ThumbnailCache), typeof(ThumbnailHost),
         new PropertyMetadata(null, OnCacheChange));
 
+    /// <summary>是否允许取图（面板收起/停靠时为 false）：收起的面板不显示内容，
+    /// 此时新增历史、容器换绑都不得解码缩略图；呼出置 true 时补取已实现容器。
+    /// 默认 false（取图必须先被显式允许）：新容器的 EntryId 绑定可能先于闸门绑定到达，
+    /// 默认放行会在停靠态漏出解码。</summary>
+    public static readonly DependencyProperty LoadEnabledProperty = DependencyProperty.Register(
+        nameof(LoadEnabled), typeof(bool), typeof(ThumbnailHost),
+        new PropertyMetadata(false, OnRequestPropertyChange));
+
     /// <summary>缩略图高度（F42 规格：150 DIP，contain 居中）。</summary>
     public const double HeightDip = 150;
     /// <summary>缩略图圆角（F42 规格：6 DIP）。</summary>
@@ -68,6 +76,13 @@ public sealed class ThumbnailHost : Border
         set => SetValue(CacheProperty, value);
     }
 
+    /// <summary>面板可见时允许取图；停靠期间为 false（不解读、不缓存不可见内容）。</summary>
+    public bool LoadEnabled
+    {
+        get => (bool)GetValue(LoadEnabledProperty);
+        set => SetValue(LoadEnabledProperty, value);
+    }
+
     /// <summary>圆角裁剪：Border 的 CornerRadius 不裁剪子内容，Image 需要显式几何。</summary>
     private void UpdateClip()
     {
@@ -82,11 +97,12 @@ public sealed class ThumbnailHost : Border
     private static void OnCacheChange(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
         ((ThumbnailHost)d).Request();
 
-    /// <summary>发起取图：EntryId 在此刻锁定为本控件的当前条目（回调防错图的比对基准）。</summary>
+    /// <summary>发起取图：EntryId 在此刻锁定为本控件的当前条目（回调防错图的比对基准）。
+    /// 停靠态（LoadEnabled=false）不发请求——面板收起时不显示内容，解码只是无用的后台工作。</summary>
     public void Request()
     {
-        // 文字卡（折叠态）不取图；缺路径/缓存不发请求
-        if (Visibility != Visibility.Visible || Cache is not { } cache ||
+        // 文字卡（折叠态）不取图；缺路径/缓存/未允许加载时不发请求
+        if (Visibility != Visibility.Visible || Cache is not { } cache || !LoadEnabled ||
             EntryId is not { } id || ImagePath is null)
         {
             return;
