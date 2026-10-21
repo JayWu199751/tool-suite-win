@@ -7,5 +7,13 @@
     <Project Path="tests/ToolSuite.HostChecks/ToolSuite.HostChecks.csproj" />
   </Folder>
   <Folder Name="/modules/Clipboard/"><Project Path="modules/Clipboard/ClipboardTool.Presentation.Wpf/ClipboardTool.Presentation.Wpf.csproj" /><Project Path="modules/Clipboard/ClipboardTool.Tests/ClipboardTool.Tests.csproj" /></Folder>
+  <Folder Name="/modules/PerfMonitor/">
+    <Project Path="modules/PerfMonitor/src/PerfMonitor.Core/PerfMonitor.Core.csproj" />
+    <Project Path="modules/PerfMonitor/src/PerfMonitor.Windows/PerfMonitor.Windows.csproj" />
+    <Project Path="modules/PerfMonitor/src/PerfMonitor.App/PerfMonitor.App.csproj" />
+    <Project Path="modules/PerfMonitor/tests/PerfMonitor.Core.Tests/PerfMonitor.Core.Tests.csproj" />
+    <Project Path="modules/PerfMonitor/tests/PerfMonitor.Windows.Tests/PerfMonitor.Windows.Tests.csproj" />
+    <Project Path="modules/PerfMonitor/tests/PerfMonitor.App.Tests/PerfMonitor.App.Tests.csproj" />
+  </Folder>
   <Folder Name="/checks/"><Project Path="tests/ToolSuite.ClipboardUiChecks/ToolSuite.ClipboardUiChecks.csproj" /><Project Path="tests/ToolSuite.ClipboardChecks/ToolSuite.ClipboardChecks.csproj" /></Folder>
 </Solution>
