@@ -28,6 +28,7 @@ public sealed class SuiteController
     {
         // 第一次即持久化独立设置，不访问或猜测任何旧目录。
         store.Save(Settings);
+        foreach (var (id, module) in modules) module.Configure(CreateContext(id));
         foreach (var (id, _) in Catalog)
             if (Settings.EnabledTools[id] && modules.ContainsKey(id)) await SetEnabledAsync(id, true, cancellationToken);
     }
@@ -43,7 +44,8 @@ public sealed class SuiteController
                 try
                 {
                     Directory.CreateDirectory(store.ModuleDirectory(id));
-                    await module.StartAsync(new(store.ModuleDirectory(id), effectiveTheme, ReportError), cancellationToken);
+                    module.Configure(CreateContext(id));
+                    await module.StartAsync(CreateContext(id), cancellationToken);
                     states[id] = ToolState.Running;
                     startedHere = true;
                 }
@@ -104,8 +106,7 @@ public sealed class SuiteController
     public void ApplyEffectiveTheme(ThemePreference theme)
     {
         effectiveTheme = theme;
-        foreach (var (id, module) in modules)
-            if (states[id] == ToolState.Running) module.ApplyTheme(theme);
+        foreach (var module in modules.Values) module.ApplyTheme(theme);
     }
     public async Task<bool> PrepareExitAsync(CancellationToken cancellationToken = default)
     {
@@ -135,5 +136,7 @@ public sealed class SuiteController
         }
         finally { gate.Release(); Changed?.Invoke(); }
     }
+    private ModuleContext CreateContext(string id) => new(store.ModuleDirectory(id), effectiveTheme,
+        ReportError, SetTheme, () => Settings.Theme);
     private void ReportError(string message) => ErrorReported?.Invoke(message);
 }
