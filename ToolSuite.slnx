@@ -6,4 +6,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/ToolSuite.HostChecks/ToolSuite.HostChecks.csproj" />
   </Folder>
+  <Folder Name="/modules/Clipboard/"><Project Path="modules/Clipboard/ClipboardTool.Presentation.Wpf/ClipboardTool.Presentation.Wpf.csproj" /><Project Path="modules/Clipboard/ClipboardTool.Tests/ClipboardTool.Tests.csproj" /></Folder>
+  <Folder Name="/checks/"><Project Path="tests/ToolSuite.ClipboardUiChecks/ToolSuite.ClipboardUiChecks.csproj" /><Project Path="tests/ToolSuite.ClipboardChecks/ToolSuite.ClipboardChecks.csproj" /></Folder>
 </Solution>
