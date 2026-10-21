@@ -13,6 +13,8 @@ internal static class Program
     {
         try
         {
+            // 必须早于 Application/任何便签窗口，避免旧触笔线程阻塞窗口销毁。
+            AppContext.SetSwitch("Switch.System.Windows.Input.Stylus.EnablePointerSupport", true);
             var dataIndex = Array.IndexOf(args, "--data-root");
             var root = dataIndex >= 0 ? Path.GetFullPath(args[dataIndex + 1])
                 : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ToolSuite");
@@ -44,7 +46,8 @@ internal sealed class SuiteApplication : Application
         base.OnStartup(e);
         try
         {
-            controller = new SuiteController(new SuiteSettingsStore(root), ModuleCatalog.CreateModules());
+            // 此模式只检查宿主基础设施；真实三个模块由各模块及整套检查入口验证。
+            controller = new SuiteController(new SuiteSettingsStore(root), verify ? [] : ModuleCatalog.CreateModules());
             theme = new SuiteTheme(controller, Dispatcher);
             tray = new TrayHost(controller, ShowSettings, RequestExitAsync);
             controller.ErrorReported += tray.ShowError;

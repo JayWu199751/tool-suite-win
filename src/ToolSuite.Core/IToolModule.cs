@@ -8,6 +8,8 @@ public interface IToolModule
     string Id { get; }
     string DisplayName { get; }
     IReadOnlyList<ToolCommand> Commands { get; }
+    // 冷启动停用工具时也注入数据位置；此入口仅保存轻量上下文，不建立监听或窗口。
+    void Configure(ModuleContext context) { }
     Task StartAsync(ModuleContext context, CancellationToken cancellationToken);
     Task PrepareToStopAsync(CancellationToken cancellationToken);
     Task StopAsync(CancellationToken cancellationToken);
@@ -17,7 +19,8 @@ public interface IToolModule
 public sealed record ToolCommand(string Id, string Label, Func<CancellationToken, Task> ExecuteAsync,
     bool RequiresRunning = true);
 
-public sealed record ModuleContext(string DataDirectory, ThemePreference Theme, Action<string> ReportError);
+public sealed record ModuleContext(string DataDirectory, ThemePreference Theme, Action<string> ReportError,
+    Action<ThemePreference>? RequestThemeChange = null, Func<ThemePreference>? ReadThemePreference = null);
 public enum ToolState { Unavailable, Disabled, Running, Failed }
 public sealed record ToolStatus(string Id, string DisplayName, bool Enabled, ToolState State, string? Error,
     IReadOnlyList<ToolCommand> Commands);

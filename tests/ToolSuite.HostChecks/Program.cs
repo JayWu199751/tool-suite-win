@@ -44,6 +44,19 @@ Assert(failingController.Tools.Single(t => t.Id == "clipboard").State != ToolSta
 Assert(!failingStore.Load().EnabledTools["clipboard"], "失败后落盘仍为停用");
 Console.WriteLine("PASS: 启用落盘失败回滚运行资源");
 
+var offlineStore = new SuiteSettingsStore(Path.Combine(root, "offline-configuration"));
+var offlineSettings = new SuiteSettings();
+offlineSettings.EnabledTools["clipboard"] = false;
+offlineStore.Save(offlineSettings);
+var offlineTool = new DraftTool();
+var offlineController = new SuiteController(offlineStore, [offlineTool]);
+await offlineController.StartAsync();
+Assert(offlineTool.ConfiguredContext?.DataDirectory == offlineStore.ModuleDirectory("clipboard"),
+    "冷启动已停用工具仍取得套件独立数据位置供离线设置使用");
+Assert(offlineController.Tools.Single(t => t.Id == "clipboard").State == ToolState.Disabled,
+    "配置上下文不隐式启动已停用工具");
+Console.WriteLine("PASS: 停用状态冷启动的轻量上下文配置");
+
 static void Assert(bool condition, string message) { if (!condition) throw new Exception(message); }
 
 sealed class DraftTool : IToolModule
@@ -51,6 +64,8 @@ sealed class DraftTool : IToolModule
     public string Id => "clipboard";
     public string DisplayName => "测试编辑器";
     public bool RefuseSave { get; set; }
+    public ModuleContext? ConfiguredContext { get; private set; }
+    public void Configure(ModuleContext context) => ConfiguredContext = context;
     public IReadOnlyList<ToolCommand> Commands => [];
     public Task StartAsync(ModuleContext context, CancellationToken cancellationToken) => Task.CompletedTask;
     public Task PrepareToStopAsync(CancellationToken cancellationToken)
