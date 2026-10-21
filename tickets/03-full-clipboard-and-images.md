@@ -6,7 +6,7 @@
 
 **Status:** resolved
 
-**实施结果：** 图片/截图入库、去重与 200 条上限、搜索、置顶、备注、6 秒撤销、清空历史、按可视项与显示尺寸解码缩略图均已接入并修复了清空历史未接线与收起仍解码两处真实缺口。`ToolSuite.ClipboardChecks` 8 条、`ToolSuite.ClipboardUiChecks` 4 条通过；真实系统截图与管理员窗口粘贴未执行，详见[验证记录](../docs/validation/ticket-03.md)。
+**实施结果：** 图片/截图入库、去重与 200 条上限、搜索、置顶、备注、6 秒撤销、清空历史、按可视项与显示尺寸解码缩略图均已接入并修复了清空历史未接线与收起仍解码两处真实缺口。`ToolSuite.ClipboardChecks` 8 条、`ToolSuite.ClipboardUiChecks` 5 条通过；真实系统截图与管理员窗口粘贴未执行，详见[验证记录](../docs/validation/ticket-03.md)。代码审查修复补上系统高对比度主题（`Themes/HighContrast.xaml`，键集合与明暗完全一致，随 `SystemParameters` 变化重新应用并在停用时退订），详见[审查修复记录](../docs/validation/code-review-fixes.md)。
 
 **规格：** [工具套件合并规格](../spec.md)。主要覆盖用户故事 13、15、16、17、38、40 中的剪贴板行为。
 
