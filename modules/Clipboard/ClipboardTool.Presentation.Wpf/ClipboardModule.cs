@@ -298,8 +298,8 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
         _panel.Resources.MergedDictionaries.Clear();
         _panel.Resources.MergedDictionaries.Add(new ResourceDictionary {
             Source = ClipboardThemeSelection.SourceFor(theme, SystemParameters.HighContrast) });
-        _panel.Resources["Font.Sans"] = new System.Windows.Media.FontFamily("Microsoft YaHei, Segoe UI");
-        _panel.Resources["Font.Mono"] = new System.Windows.Media.FontFamily("Cascadia Code, Consolas");
+        _panel.Resources["Font.Sans"] = new System.Windows.Media.FontFamily("Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI");
+        _panel.Resources["Font.Mono"] = new System.Windows.Media.FontFamily("Cascadia Mono, Consolas");
         _panel.SetThemePreference((_context?.ReadThemePreference?.Invoke() ?? theme) switch { ToolSuite.Core.ThemePreference.System => ThemeKind.System, ToolSuite.Core.ThemePreference.Light => ThemeKind.Light, _ => ThemeKind.Dark });
     }
 

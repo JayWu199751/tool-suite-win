@@ -38,8 +38,8 @@ public sealed class ThumbnailHost : Border
 
     /// <summary>缩略图高度（F42 规格：150 DIP，contain 居中）。</summary>
     public const double HeightDip = 150;
-    /// <summary>缩略图圆角（F42 规格：6 DIP）。</summary>
-    private const double CornerRadiusDip = 6;
+    /// <summary>缩略图圆角（F42 规格；视觉规范：紧凑卡片 12 DIP）。</summary>
+    private const double CornerRadiusDip = 12;
 
     private readonly Image _image;
     private int _generation;

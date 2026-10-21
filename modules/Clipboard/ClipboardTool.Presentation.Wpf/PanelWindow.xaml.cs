@@ -32,9 +32,10 @@ public partial class PanelWindow : Window
     private const int ToastLeaveMs = 160;
     private const double FooterCompactWidthDip = 340;
 
-    /// <summary>外壳圆角与描边（与 PanelWindow.xaml 保持一致）；内容裁剪半径 = 圆角 − 描边 − 让位。</summary>
-    private const double ShellCornerRadiusDip = 36;
-    private const double ShellBorderThicknessDip = 2;
+    /// <summary>外壳圆角与描边（与 PanelWindow.xaml 保持一致）；内容裁剪半径 = 圆角 − 描边 − 让位。
+    /// 视觉规范：容器圆角 28、发丝描边 1 DIP。</summary>
+    private const double ShellCornerRadiusDip = 28;
+    private const double ShellBorderThicknessDip = 1;
 
     /// <summary>
     /// 裁剪弧相对描边内缘再让位 1 DIP：裁剪与描边内曲线重合时，裁剪的抗锯齿边缘会把

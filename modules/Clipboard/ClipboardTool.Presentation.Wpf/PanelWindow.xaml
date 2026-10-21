@@ -18,25 +18,20 @@
     <Window.Resources>
         <ResourceDictionary>
         <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="Themes/Dark.xaml" /></ResourceDictionary.MergedDictionaries>
-        <FontFamily x:Key="Font.Sans">Microsoft YaHei, Segoe UI</FontFamily>
-        <FontFamily x:Key="Font.Mono">Cascadia Code, Consolas</FontFamily>
+        <FontFamily x:Key="Font.Sans">Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI</FontFamily>
+        <FontFamily x:Key="Font.Mono">Cascadia Mono, Consolas</FontFamily>
         <!-- 备注编辑：卡片 Id == 视图模型 NoteEditingId 时显示内联编辑框，meta 行在非编辑时显示（两态等高，F47） -->
         <local:EqualityToVisibilityConverter x:Key="EqualityToVisibility" />
         <local:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibility" />
         <local:CompactValueConverter x:Key="CompactValue" />
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
-        <!-- 图卡棋盘格底（F42）：16 DIP 瓦片 = 8 DIP 方格 ×2，方格色 Brush.Thumb.Checker 随主题；
-             渐变底 #2A2A40→#1A1A24 为 design-system 钉死的写死色值（两主题共用，不做 token 化） -->
-        <LinearGradientBrush x:Key="Thumb.Base" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Offset="0" Color="#2A2A40" />
-            <GradientStop Offset="1" Color="#1A1A24" />
-        </LinearGradientBrush>
+        <!-- 图卡底：中性表面 + 低对比棋盘格表达透明区域（设计规范：不使用彩色渐变） -->
         <DrawingBrush x:Key="Thumb.Checker"
                       TileMode="Tile" ViewportUnits="Absolute" Viewport="0,0,16,16">
             <DrawingBrush.Drawing>
                 <DrawingGroup>
-                    <GeometryDrawing Brush="{StaticResource Thumb.Base}">
+                    <GeometryDrawing Brush="{DynamicResource Brush.Input}">
                         <GeometryDrawing.Geometry>
                             <RectangleGeometry Rect="0,0,16,16" />
                         </GeometryDrawing.Geometry>
@@ -53,7 +48,7 @@
             </DrawingBrush.Drawing>
         </DrawingBrush>
 
-        <!-- 卡片容器：CornerRadius12、1 DIP 细线（Border.Subtle）、上下12/左右16；hover 仅细边加深。
+        <!-- 卡片容器：圆角 20、1 DIP 发丝线、内边距 16/14；hover 只加深描边，选中用淡蓝染 + 蓝色描边。
              Padding/Margin 显式清零 + Stretch：ListBoxItem 默认 Padding=1 会让卡片内缩、
              右细线在 175% DPI 的亚像素相位下被背景吞掉，左右边距不再对称 -->
         <Style x:Key="CardContainerStyle" TargetType="ListBoxItem">
@@ -69,8 +64,8 @@
                                 Background="{DynamicResource Brush.Card}"
                                 BorderBrush="{DynamicResource Brush.Border.Subtle}"
                                 BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="16,12"
+                                CornerRadius="20"
+                                Padding="16,14"
                                 Margin="0,0,0,8"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter />
@@ -91,241 +86,241 @@
     </ResourceDictionary>
     </Window.Resources>
 
-    <!-- 外壳：四边 1 DIP 安全留白，2 DIP #757575 实线，36 DIP 圆角，两主题同色。
+    <!-- 外壳：四边 1 DIP 安全留白，1 DIP 发丝外环，28 DIP 圆角（与 PanelWindow.xaml.cs 的
+         ShellCornerRadiusDip/ShellBorderThicknessDip 保持一致）。
          WPF Border 的绘制顺序是背景→描边→子内容：通栏页脚的方角会伸进描边内圆角的角落扇区、
-         从内侧盖掉弧线，故内层三行 Grid（ShellRows，原点=描边内缘）按内圆角让位裁剪；
-         描边之外再补描一层同样的环（不参与命中测试）：描边外圈抗锯齿像素与窗外桌面混合，
-         桌面亮暗会让圆角观感粗细不一，双层叠涂使 fringe 趋于不透明，四角粗细一致 -->
+         从内侧盖掉弧线，故内层三行 Grid（ShellRows，原点=描边内缘）按内圆角让位裁剪。 -->
     <Grid Margin="1" Background="Transparent">
-        <Border CornerRadius="36"
-                BorderThickness="2"
+        <Border CornerRadius="28"
+                BorderThickness="1"
                 BorderBrush="{DynamicResource Brush.Window.Ring}"
                 Background="{DynamicResource Brush.App}">
             <Grid x:Name="ShellRows" SizeChanged="OnShellRowsSizeChanged">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="60" />
+                    <RowDefinition Height="68" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="30" />
+                    <RowDefinition Height="40" />
                 </Grid.RowDefinitions>
 
-                <!-- 搜索头：左右 12 DIP，搜索井高 36 胶囊（半径=高一半），图标 15，清除 16/图标 10，主题按钮 24/图标 15，键名 chip。
-                     浏览态输入框只读（模式在主进程侧，legacy SearchHeader readOnly 同语义），点击井 = 进搜索 -->
-                <Grid Grid.Row="0" Margin="12,0">
-                    <Border x:Name="SearchWell"
-                            Height="36"
-                            VerticalAlignment="Center"
-                            Background="{DynamicResource Brush.Input}"
-                            BorderBrush="{DynamicResource Brush.Border.Strong}"
-                            BorderThickness="1"
-                            CornerRadius="18"
-                            Padding="12,0,8,0"
-                            PreviewMouseLeftButtonDown="OnSearchWellPress">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                <!-- 搜索头：Paper 色带（与列表的画布色带形成交替），左右 16。
+                     搜索井高 40 胶囊，无重描边；浏览态输入框只读（模式在主进程侧），点击井 = 进搜索 -->
+                <Border Grid.Row="0" Background="{DynamicResource Brush.Card}">
+                    <Grid Margin="16,0">
+                        <Border x:Name="SearchWell"
+                                Height="40"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource Brush.Input}"
+                                BorderBrush="{DynamicResource Brush.Border.Subtle}"
+                                BorderThickness="1"
+                                CornerRadius="20"
+                                Padding="14,0,10,0"
+                                PreviewMouseLeftButtonDown="OnSearchWellPress">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                            <Viewbox Grid.Column="0" Width="15" Height="15" VerticalAlignment="Center">
-                                <Canvas Width="24" Height="24">
-                                    <Ellipse Canvas.Left="3.5" Canvas.Top="3.5" Width="14" Height="14"
-                                             Stroke="{DynamicResource Brush.Text.Tertiary}" StrokeThickness="1.75" />
-                                    <Line X1="15.8" Y1="15.8" X2="21" Y2="21"
-                                          Stroke="{DynamicResource Brush.Text.Tertiary}" StrokeThickness="1.75"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                </Canvas>
-                            </Viewbox>
+                                <Viewbox Grid.Column="0" Width="15" Height="15" VerticalAlignment="Center">
+                                    <Canvas Width="24" Height="24">
+                                        <Ellipse Canvas.Left="3.5" Canvas.Top="3.5" Width="14" Height="14"
+                                                 Stroke="{DynamicResource Brush.Text.Tertiary}" StrokeThickness="1.75" />
+                                        <Line X1="15.8" Y1="15.8" X2="21" Y2="21"
+                                              Stroke="{DynamicResource Brush.Text.Tertiary}" StrokeThickness="1.75"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                    </Canvas>
+                                </Viewbox>
 
-                            <Grid Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBox x:Name="SearchBox"
-                                         FontSize="13.5"
-                                         FontWeight="Medium"
-                                         Foreground="{DynamicResource Brush.Text.Primary}"
-                                         CaretBrush="{DynamicResource Brush.Text.Primary}"
-                                         Background="Transparent"
-                                         BorderThickness="0"
-                                         VerticalContentAlignment="Center"
-                                         Padding="0"
-                                         IsReadOnly="True"
-                                         AutomationProperties.Name="{x:Static local:AccessibilityNames.SearchInput}"
-                                         TextChanged="OnSearchBoxTextChanged" />
-                                <TextBlock Text="{Binding PlaceholderText}"
-                                           FontSize="13.5"
-                                           Foreground="{DynamicResource Brush.Text.Tertiary}"
-                                           IsHitTestVisible="False">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                <Grid Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBox x:Name="SearchBox"
+                                             FontSize="14"
+                                             FontWeight="Normal"
+                                             Foreground="{DynamicResource Brush.Text.Primary}"
+                                             CaretBrush="{DynamicResource Brush.Text.Primary}"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             VerticalContentAlignment="Center"
+                                             Padding="0"
+                                             IsReadOnly="True"
+                                             AutomationProperties.Name="{x:Static local:AccessibilityNames.SearchInput}"
+                                             TextChanged="OnSearchBoxTextChanged" />
+                                    <TextBlock Text="{Binding PlaceholderText}"
+                                               FontSize="14"
+                                               Foreground="{DynamicResource Brush.Text.Tertiary}"
+                                               IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+
+                                <!-- 清除按钮：仅搜索态且有查询时出现；点击清查询并保留输入焦点（F23）；
+                                     纯图形无文本，F48 显式命名；Focusable=False 与 legacy 一致（鼠标专用，
+                                     焦点留在搜索框），IsFocused 触发器保留为完整视觉状态 -->
+                                <Button x:Name="SearchClear"
+                                        Grid.Column="2"
+                                        Width="20" Height="20"
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Visibility="Collapsed"
+                                        Focusable="False"
+                                        AutomationProperties.Name="{x:Static local:AccessibilityNames.SearchClear}"
+                                        PreviewMouseLeftButtonDown="OnSearchClearPress">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="ClearBg"
+                                                    Background="Transparent"
+                                                    CornerRadius="10"
+                                                    BorderThickness="1"
+                                                    BorderBrush="Transparent">
+                                                <Viewbox Width="10" Height="10">
+                                                    <Canvas Width="24" Height="24">
+                                                        <Line X1="5" Y1="5" X2="19" Y2="19"
+                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="2.5"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                        <Line X1="19" Y1="5" X2="5" Y2="19"
+                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="2.5"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                    </Canvas>
+                                                </Viewbox>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ClearBg" Property="Background" Value="{DynamicResource Brush.Bg.Active}" />
+                                                </Trigger>
+                                                <Trigger Property="IsFocused" Value="True">
+                                                    <Setter TargetName="ClearBg" Property="BorderBrush" Value="{DynamicResource Brush.Border.Selected}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <!-- 主题按钮（F26 面板入口）：28 按钮/15 图标，展示当前偏好
+                                     （太阳=亮色/月亮=暗色/显示器=跟随系统），点击三态循环（App 侧
+                                     ThemeService.Toggle 权威，经 ThemeToggleRequested 上抛）。
+                                     Focusable=False：切换不抢焦点，搜索态保留文字与输入焦点；
+                                     浏览态点击按钮不进搜索——井的隧道处理先于按钮触发（祖先先至），
+                                     OnSearchWellPress 按命中来源排除本按钮；悬停提示当前与下一态 -->
+                                <Button x:Name="ThemeButton"
+                                        Grid.Column="3"
+                                        Width="28" Height="28"
+                                        Margin="6,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Focusable="False"
+                                        ToolTip="{Binding ThemeButtonTooltip}"
+                                        AutomationProperties.Name="{x:Static local:AccessibilityNames.ThemeToggle}"
+                                        PreviewMouseLeftButtonDown="OnThemeButtonPress">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="ThemeBg"
+                                                    Background="Transparent"
+                                                    CornerRadius="14"
+                                                    BorderThickness="1"
+                                                    BorderBrush="Transparent">
+                                                <Grid>
+                                                    <!-- 太阳（亮色偏好，lucide sun） -->
+                                                    <Viewbox Width="15" Height="15"
+                                                             Visibility="{Binding ThemeSunVisible}">
+                                                        <Canvas Width="24" Height="24">
+                                                            <Ellipse Canvas.Left="8" Canvas.Top="8" Width="8" Height="8"
+                                                                     Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75" />
+                                                            <Line X1="12" Y1="2" X2="12" Y2="4"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            <Line X1="12" Y1="20" X2="12" Y2="22"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            <Line X1="4.93" Y1="4.93" X2="6.34" Y2="6.34"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            <Line X1="17.66" Y1="17.66" X2="19.07" Y2="19.07"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            <Line X1="2" Y1="12" X2="4" Y2="12"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            <Line X1="20" Y1="12" X2="22" Y2="12"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            <Line X1="6.34" Y1="17.66" X2="4.93" Y2="19.07"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                            <Line X1="19.07" Y1="4.93" X2="17.66" Y2="6.34"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                        </Canvas>
+                                                    </Viewbox>
+                                                    <!-- 月亮（暗色偏好，lucide moon） -->
+                                                    <Viewbox Width="15" Height="15"
+                                                             Visibility="{Binding ThemeMoonVisible}">
+                                                        <Canvas Width="24" Height="24">
+                                                            <Path Data="M 12,3 A 6,6 0 0 0 21,12 A 9,9 0 1 1 12,3 Z"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                                  StrokeLineJoin="Round" />
+                                                        </Canvas>
+                                                    </Viewbox>
+                                                    <!-- 显示器（跟随系统偏好） -->
+                                                    <Viewbox Width="15" Height="15"
+                                                             Visibility="{Binding ThemeMonitorVisible}">
+                                                        <Canvas Width="24" Height="24">
+                                                            <Rectangle Canvas.Left="3" Canvas.Top="5" Width="18" Height="12" RadiusX="2" RadiusY="2"
+                                                                       Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75" />
+                                                            <Line X1="9" Y1="20.5" X2="15" Y2="20.5"
+                                                                  Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
+                                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                                                        </Canvas>
+                                                    </Viewbox>
+                                                </Grid>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ThemeBg" Property="Background" Value="{DynamicResource Brush.Bg.Active}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
+                                <!-- 键名 chip（搜索键的家，legacy「提示 = 行为」）：文本由键位注册表推导，搜索态收起 -->
+                                <Border Grid.Column="4" Height="20" MinWidth="20"
+                                        Margin="8,0,0,0"
+                                        CornerRadius="6"
+                                        Padding="6,0"
+                                        Background="{DynamicResource Brush.Card}"
+                                        BorderBrush="{DynamicResource Brush.Border.Subtle}"
+                                        BorderThickness="1"
+                                        Visibility="{Binding SearchKeyChipVisible}"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding SearchKeyText}"
+                                               FontFamily="{StaticResource Font.Mono}"
+                                               FontSize="10.5"
+                                               FontWeight="Medium"
+                                               Foreground="{DynamicResource Brush.Text.Secondary}"
+                                               VerticalAlignment="Center" />
+                                </Border>
                             </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
 
-                            <!-- 清除按钮：仅搜索态且有查询时出现；点击清查询并保留输入焦点（F23）；
-                                 纯图形无文本，F48 显式命名；Focusable=False 与 legacy 一致（鼠标专用，
-                                 焦点留在搜索框），IsFocused 触发器保留为完整视觉状态 -->
-                            <Button x:Name="SearchClear"
-                                    Grid.Column="2"
-                                    Width="16" Height="16"
-                                    Margin="6,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Visibility="Collapsed"
-                                    Focusable="False"
-                                    AutomationProperties.Name="{x:Static local:AccessibilityNames.SearchClear}"
-                                    PreviewMouseLeftButtonDown="OnSearchClearPress">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="ClearBg"
-                                                Background="Transparent"
-                                                CornerRadius="8"
-                                                BorderThickness="1"
-                                                BorderBrush="Transparent">
-                                            <Viewbox Width="10" Height="10">
-                                                <Canvas Width="24" Height="24">
-                                                    <Line X1="5" Y1="5" X2="19" Y2="19"
-                                                          Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="2.5"
-                                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    <Line X1="19" Y1="5" X2="5" Y2="19"
-                                                          Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="2.5"
-                                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                </Canvas>
-                                            </Viewbox>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ClearBg" Property="Background" Value="{DynamicResource Brush.Bg.Active}" />
-                                            </Trigger>
-                                            <Trigger Property="IsFocused" Value="True">
-                                                <Setter TargetName="ClearBg" Property="BorderBrush" Value="{DynamicResource Brush.Border.Selected}" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-
-                            <!-- 主题按钮（F26 面板入口）：24 按钮/15 图标，展示当前偏好
-                                 （太阳=亮色/月亮=暗色/显示器=跟随系统），点击三态循环（App 侧
-                                 ThemeService.Toggle 权威，经 ThemeToggleRequested 上抛）。
-                                 Focusable=False：切换不抢焦点，搜索态保留文字与输入焦点；
-                                 浏览态点击按钮不进搜索——井的隧道处理先于按钮触发（祖先先至），
-                                 OnSearchWellPress 按命中来源排除本按钮；悬停提示当前与下一态 -->
-                            <Button x:Name="ThemeButton"
-                                    Grid.Column="3"
-                                    Width="24" Height="24"
-                                    Margin="6,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Focusable="False"
-                                    ToolTip="{Binding ThemeButtonTooltip}"
-                                    AutomationProperties.Name="{x:Static local:AccessibilityNames.ThemeToggle}"
-                                    PreviewMouseLeftButtonDown="OnThemeButtonPress">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border x:Name="ThemeBg"
-                                                Background="Transparent"
-                                                CornerRadius="12"
-                                                BorderThickness="1"
-                                                BorderBrush="Transparent">
-                                            <Grid>
-                                                <!-- 太阳（亮色偏好，lucide sun） -->
-                                                <Viewbox Width="15" Height="15"
-                                                         Visibility="{Binding ThemeSunVisible}">
-                                                    <Canvas Width="24" Height="24">
-                                                        <Ellipse Canvas.Left="8" Canvas.Top="8" Width="8" Height="8"
-                                                                 Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75" />
-                                                        <Line X1="12" Y1="2" X2="12" Y2="4"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                        <Line X1="12" Y1="20" X2="12" Y2="22"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                        <Line X1="4.93" Y1="4.93" X2="6.34" Y2="6.34"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                        <Line X1="17.66" Y1="17.66" X2="19.07" Y2="19.07"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                        <Line X1="2" Y1="12" X2="4" Y2="12"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                        <Line X1="20" Y1="12" X2="22" Y2="12"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                        <Line X1="6.34" Y1="17.66" X2="4.93" Y2="19.07"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                        <Line X1="19.07" Y1="4.93" X2="17.66" Y2="6.34"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    </Canvas>
-                                                </Viewbox>
-                                                <!-- 月亮（暗色偏好，lucide moon） -->
-                                                <Viewbox Width="15" Height="15"
-                                                         Visibility="{Binding ThemeMoonVisible}">
-                                                    <Canvas Width="24" Height="24">
-                                                        <Path Data="M 12,3 A 6,6 0 0 0 21,12 A 9,9 0 1 1 12,3 Z"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                                              StrokeLineJoin="Round" />
-                                                    </Canvas>
-                                                </Viewbox>
-                                                <!-- 显示器（跟随系统偏好） -->
-                                                <Viewbox Width="15" Height="15"
-                                                         Visibility="{Binding ThemeMonitorVisible}">
-                                                    <Canvas Width="24" Height="24">
-                                                        <Rectangle Canvas.Left="3" Canvas.Top="5" Width="18" Height="12" RadiusX="2" RadiusY="2"
-                                                                   Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75" />
-                                                        <Line X1="9" Y1="20.5" X2="15" Y2="20.5"
-                                                              Stroke="{DynamicResource Brush.Text.Secondary}" StrokeThickness="1.75"
-                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-                                                    </Canvas>
-                                                </Viewbox>
-                                            </Grid>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ThemeBg" Property="Background" Value="{DynamicResource Brush.Bg.Active}" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-
-                            <!-- 键名 chip（搜索键的家，legacy「提示 = 行为」）：文本由键位注册表推导，搜索态收起 -->
-                            <Border Grid.Column="4" Height="18" MinWidth="18"
-                                    Margin="8,0,0,0"
-                                    CornerRadius="5"
-                                    Padding="5,0"
-                                    Background="{DynamicResource Brush.Input}"
-                                    BorderBrush="{DynamicResource Brush.Border.Strong}"
-                                    BorderThickness="1,1,1,2"
-                                    Visibility="{Binding SearchKeyChipVisible}"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="{Binding SearchKeyText}"
-                                           FontFamily="{StaticResource Font.Mono}"
-                                           FontSize="10.5"
-                                           FontWeight="Medium"
-                                           Foreground="{DynamicResource Brush.Text.Secondary}"
-                                           VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                    </Border>
-                </Grid>
-
-                <!-- 列表：上左右 12、下 16，卡片间 8；虚拟化 + 回收。
+                <!-- 列表：上左右 16、下 20，卡片间 8；虚拟化 + 回收。
                      原生滚动条隐藏且不占位（对齐原型 scrollbar-width:none）：Hidden 仅不绘制、
-                     仍按滚动条期望宽度压缩视口，导致卡片右缘被裁、右细线消失，故将宽度钳为 0；
-                     自绘滚动指示条归后续工单 -->
+                     仍按滚动条期望宽度压缩视口，导致卡片右缘被裁、右细线消失，故将宽度钳为 0 -->
                 <ListBox x:Name="HistoryList"
                          Grid.Row="1"
-                         Margin="12,12,12,16"
+                         Margin="16,16,16,20"
                          ItemsSource="{Binding Items}"
                          ItemContainerStyle="{StaticResource CardContainerStyle}"
                          Background="Transparent"
@@ -359,7 +354,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
-                                <!-- 缩略图（F42）：150 DIP contain 居中、6 DIP 圆角、棋盘格底、1 DIP 细线；
+                                <!-- 缩略图（F42）：150 DIP contain 居中、12 DIP 圆角、中性棋盘格底、1 DIP 细线；
                                      仅图片卡渲染；共享缓存按 Id 记忆化（P4 结论），宿主做 id/代次防错图 -->
                                 <local:ThumbnailHost Height="150"
                                                      Margin="0,0,0,12"
@@ -367,27 +362,28 @@
                                                      Background="{StaticResource Thumb.Checker}"
                                                      BorderBrush="{DynamicResource Brush.Border.Subtle}"
                                                      BorderThickness="1"
+                                                     CornerRadius="12"
                                                      Cache="{Binding DataContext.Thumbnails, RelativeSource={RelativeSource AncestorType=Window}}"
                                                      LoadEnabled="{Binding DataContext.ThumbnailsEnabled, RelativeSource={RelativeSource AncestorType=Window}}"
                                                      EntryId="{Binding Id}"
                                                      ImagePath="{Binding ImagePath}" />
-                                <!-- 文件名行（F42）：mono 12 号单行省略；缩略图→文件名的 12 DIP 间距归缩略图 Margin -->
+                                <!-- 文件名行（F42）：mono 11 号单行省略；缩略图→文件名的 12 DIP 间距归缩略图 Margin -->
                                 <TextBlock Text="{Binding FileName}"
                                            FontFamily="{StaticResource Font.Mono}"
-                                           FontSize="12"
+                                           FontSize="11"
                                            TextTrimming="CharacterEllipsis"
                                            Foreground="{DynamicResource Brush.Text.Secondary}"
                                            Visibility="{Binding IsImage, Converter={StaticResource BoolToVisibility}}" />
                                 <!-- 正文最多三行裁剪（原型 line-clamp；完整正文在备注/粘贴里原样，F01）；
-                                     命中片段 accent-soft 底色（F23，附加属性渲染高亮 Run）；图片卡正文区收起 -->
+                                     命中片段用蓝色淡染（F23，附加属性渲染高亮 Run）；图片卡正文区收起 -->
                                 <TextBlock>
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="local:HighlightText.Spans" Value="{Binding Spans}" />
-                                            <Setter Property="FontSize" Value="13" />
-                                            <Setter Property="LineHeight" Value="20.15" />
+                                            <Setter Property="FontSize" Value="14" />
+                                            <Setter Property="LineHeight" Value="20" />
                                             <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
-                                            <Setter Property="MaxHeight" Value="60.45" />
+                                            <Setter Property="MaxHeight" Value="60" />
                                             <Setter Property="TextWrapping" Value="Wrap" />
                                             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                                             <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
@@ -399,9 +395,9 @@
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <!-- meta 行（F42/F24/F47）：时间·图钉·备注 单行省略，高 16；
+                                <!-- meta 行（F42/F24/F47）：时间·图钉·备注 单行省略，高 18；
                                      编辑中整行让位给内联编辑框（两层等高 → 卡片与滚动几何零位移） -->
-                                <Grid Height="16" Margin="0,8,0,0">
+                                <Grid Height="18" Margin="0,10,0,0">
                                     <StackPanel Orientation="Horizontal">
                                         <StackPanel.Visibility>
                                             <MultiBinding Converter="{StaticResource EqualityToVisibility}" ConverterParameter="Invert">
@@ -412,8 +408,8 @@
                                         </StackPanel.Visibility>
                                         <TextBlock Text="{Binding Meta}"
                                                    FontFamily="{StaticResource Font.Mono}"
-                                                   FontSize="10.5"
-                                                   LineHeight="16"
+                                                   FontSize="11"
+                                                   LineHeight="18"
                                                    LineStackingStrategy="BlockLineHeight"
                                                    VerticalAlignment="Center"
                                                    Foreground="{DynamicResource Brush.Text.Tertiary}" />
@@ -423,16 +419,18 @@
                                             <TextBlock Text="·"
                                                        Margin="6,0,0,0"
                                                        FontFamily="{StaticResource Font.Mono}"
-                                                       FontSize="10.5"
+                                                       FontSize="11"
                                                        VerticalAlignment="Center"
                                                        Foreground="{DynamicResource Brush.Text.Tertiary}" />
                                             <Viewbox Width="12" Height="12" Margin="6,0,0,0" VerticalAlignment="Center">
                                                 <Canvas Width="24" Height="24">
                                                     <Path Data="M12 17v5"
-                                                          Stroke="{DynamicResource Brush.Text.Tertiary}" StrokeThickness="1.75"
+                                                          Stroke="{DynamicResource Brush.Accent}"
+                                                          StrokeThickness="1.75"
                                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
                                                     <Path Data="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"
-                                                          Stroke="{DynamicResource Brush.Text.Tertiary}" StrokeThickness="1.75"
+                                                          Stroke="{DynamicResource Brush.Accent}"
+                                                          StrokeThickness="1.75"
                                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
                                                 </Canvas>
                                             </Viewbox>
@@ -443,27 +441,27 @@
                                             <TextBlock Text="·"
                                                        Margin="6,0,0,0"
                                                        FontFamily="{StaticResource Font.Mono}"
-                                                       FontSize="10.5"
+                                                       FontSize="11"
                                                        VerticalAlignment="Center"
                                                        Foreground="{DynamicResource Brush.Text.Tertiary}" />
                                             <TextBlock local:HighlightText.Spans="{Binding NoteSpans}"
                                                        ToolTip="{Binding Note}"
                                                        Margin="6,0,0,0"
-                                                       FontSize="10.5"
-                                                       LineHeight="16"
+                                                       FontSize="11"
+                                                       LineHeight="18"
                                                        LineStackingStrategy="BlockLineHeight"
                                                        VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource Brush.Text.Secondary}" />
                                         </StackPanel>
                                     </StackPanel>
-                                    <!-- 内联备注编辑框（F07）：与 meta 行同高 16；描边外 3 DIP 柔光环（单一圈，
+                                    <!-- 内联备注编辑框（F07）：与 meta 行同高 18；描边外 3 DIP 柔光环（单一圈，
                                          上下各溢出 4 DIP 绘制余量，不参与布局）；MaxLength=UTF-16 上限，
                                          存储侧 Rune 归一化兜底（F07 与 04 票存储语义对齐） -->
                                     <Border Margin="0,-4"
                                             BorderThickness="3"
                                             BorderBrush="{DynamicResource Brush.Ring.Soft}"
-                                            CornerRadius="6"
+                                            CornerRadius="8"
                                             Background="Transparent">
                                         <Border.Visibility>
                                             <MultiBinding Converter="{StaticResource EqualityToVisibility}">
@@ -473,15 +471,15 @@
                                             </MultiBinding>
                                         </Border.Visibility>
                                         <TextBox x:Name="NoteBox"
-                                                 Height="16"
+                                                 Height="18"
                                                  Text="{Binding DataContext.NoteDraft, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                 FontSize="10.5"
+                                                 FontSize="11"
                                                  Foreground="{DynamicResource Brush.Text.Primary}"
                                                  CaretBrush="{DynamicResource Brush.Text.Primary}"
                                                  Background="{DynamicResource Brush.Input}"
                                                  BorderBrush="{DynamicResource Brush.Border.Selected}"
                                                  BorderThickness="1"
-                                                 Padding="7,0"
+                                                 Padding="8,0"
                                                  VerticalContentAlignment="Center"
                                                  MaxLength="{x:Static panelModes:PanelFooterRegistry.MaxNoteLength}"
                                                  AutomationProperties.Name="{x:Static local:AccessibilityNames.NoteEditor}"
@@ -502,12 +500,12 @@
                             VerticalAlignment="Center"
                             Visibility="{Binding EmptyVisible}">
                     <TextBlock Text="{Binding EmptyText}"
-                               FontSize="13"
+                               FontSize="14"
                                Foreground="{DynamicResource Brush.Text.Secondary}" />
                 </StackPanel>
 
-                <!-- toast 栈（F46）：居中胶囊，高 34，下距 48，多条竖排；
-                     成功绿勾/错误红叉（i-check/i-x 同族图形）+ 消息 + 次级 dim + 可选动作（撤销）；
+                <!-- toast 栈（F46）：居中胶囊，高 36，下距 48，多条竖排；
+                     成功/错误图标 + 消息 + 次级 dim + 可选动作（撤销）；
                      离场淡出 160ms，生命周期由窗口计时管理（撤销 toast 6s 与删除窗口同步） -->
                 <ItemsControl Grid.Row="1"
                               ItemsSource="{Binding Toasts}"
@@ -525,12 +523,12 @@
                             <!-- F48：Message 文本块锚定播报（Name=Announcement 含错误前缀/动作/dim，
                                  LiveSetting=Polite 让 Narrator 主动播报状态）；普通 Border 无 peer，
                                  播报必须锚在有 peer 的文本块上 -->
-                            <Border Height="34"
-                                    Padding="14,0,8,0"
+                            <Border Height="36"
+                                    Padding="14,0,10,0"
                                     Margin="0,4,0,0"
-                                    CornerRadius="17"
-                                    Background="{DynamicResource Brush.Input}"
-                                    BorderBrush="{DynamicResource Brush.Border.Strong}"
+                                    CornerRadius="18"
+                                    Background="{DynamicResource Brush.Card}"
+                                    BorderBrush="{DynamicResource Brush.Border.Subtle}"
                                     BorderThickness="1">
                                 <Border.Style>
                                     <Style TargetType="Border">
@@ -583,7 +581,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <Viewbox Width="14" Height="14" VerticalAlignment="Center">
                                         <Canvas Width="24" Height="24">
-                                            <!-- 勾（成功绿） -->
+                                            <!-- 勾（成功） -->
                                             <Path Data="m20 6.5-11 11-5-5"
                                                   Stroke="{DynamicResource Brush.Success}" StrokeThickness="1.75"
                                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round">
@@ -598,7 +596,7 @@
                                                     </Style>
                                                 </Path.Style>
                                             </Path>
-                                            <!-- 叉（错误红） -->
+                                            <!-- 叉（错误） -->
                                             <Path Data="M18 6 6 18M6 6l12 12"
                                                   Stroke="{DynamicResource Brush.Error}" StrokeThickness="1.75"
                                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round">
@@ -637,7 +635,7 @@
                                             Visibility="{Binding ActionLabel, Converter={StaticResource StringNotEmptyToVisibility}}">
                                         <Button.Template>
                                             <ControlTemplate TargetType="Button">
-                                                <!-- 静态无边框（对齐原型 .toast__action：accent 文字 + 胶囊悬停底，无边框线）；
+                                                <!-- 静态无边框（accent 文字 + 胶囊悬停底，无边框线）；
                                                      保留 1px 透明描边仅作 F48 键盘焦点环载体 -->
                                                 <Border x:Name="ToastActionBg"
                                                         Background="Transparent"
@@ -654,7 +652,7 @@
                                                     </Trigger>
                                                     <!-- F48 键盘焦点环：撤销按钮可被键盘聚焦时显示完整环 -->
                                                     <Trigger Property="IsFocused" Value="True">
-                                                        <Setter TargetName="ToastActionBg" Property="BorderBrush" Value="{DynamicResource Brush.Accent.Text}" />
+                                                        <Setter TargetName="ToastActionBg" Property="BorderBrush" Value="{DynamicResource Brush.Accent}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -666,20 +664,19 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <!-- 页脚：左右 16、顶部细分隔线、mono 10.5；左侧计数，右侧键位提示（组间 8、组内 4，chip 高 16/字 9.5）
+                <!-- 页脚：Paper 色带，左右 16，无分隔线（靠色带切分）；mono 11；
+                     左侧计数，右侧键位提示（组间 8、组内 4，chip 高 18/字 10）
                      数据源 = 键位注册表按面板模式生成（F45/F20），未生效的键不展示（提示 = 行为）；
-                     ≤340 DIP 窄档收紧（F47）：左右 10、文字 9.5、组距 3 -->
+                     ≤340 DIP 窄档收紧（F47）：左右 12、文字 10 -->
                 <Border x:Name="FooterHost"
                         Grid.Row="2"
-                        BorderThickness="0,1,0,0"
-                        BorderBrush="{DynamicResource Brush.Border.Subtle}"
-                        Background="{DynamicResource Brush.App}"
+                        Background="{DynamicResource Brush.Card}"
                         SizeChanged="OnFooterSizeChanged"
-                        Padding="{Binding FooterCompact, Converter={StaticResource CompactValue}, ConverterParameter='16,0|10,0'}">
+                        Padding="{Binding FooterCompact, Converter={StaticResource CompactValue}, ConverterParameter='16,0|12,0'}">
                     <Grid>
                         <TextBlock Text="{Binding CountText}"
                                    FontFamily="{StaticResource Font.Mono}"
-                                   FontSize="10.5"
+                                   FontSize="11"
                                    Foreground="{DynamicResource Brush.Text.Tertiary}"
                                    VerticalAlignment="Center" />
                         <!-- 右侧（F45）：焦点错误覆盖普通组；备注态为 保存/取消/字数 三段；
@@ -696,7 +693,7 @@
                                 <ItemsControl.ItemContainerStyle>
                                     <Style TargetType="ContentPresenter">
                                         <Setter Property="Margin"
-                                                Value="{Binding DataContext.FooterCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactValue}, ConverterParameter='8,0,0,0|3,0,0,0'}" />
+                                                Value="{Binding DataContext.FooterCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactValue}, ConverterParameter='8,0,0,0|4,0,0,0'}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding AlternationIndex, RelativeSource={RelativeSource Self}}" Value="0">
                                                 <Setter Property="Margin" Value="0" />
@@ -708,9 +705,9 @@
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
                                             <!-- 键名 chip：字数段（IsCount）不画 chip -->
-                                            <Border Height="16" MinWidth="18" CornerRadius="5" Padding="5,0"
+                                            <Border Height="18" MinWidth="20" CornerRadius="6" Padding="6,0"
                                                     Background="{DynamicResource Brush.Input}"
-                                                    BorderBrush="{DynamicResource Brush.Border.Strong}"
+                                                    BorderBrush="{DynamicResource Brush.Border.Subtle}"
                                                     BorderThickness="1"
                                                     VerticalAlignment="Center">
                                                 <Border.Style>
@@ -724,21 +721,21 @@
                                                 </Border.Style>
                                                 <TextBlock Text="{Binding Keys}"
                                                            FontFamily="{StaticResource Font.Mono}"
-                                                           FontSize="9.5"
+                                                           FontSize="10"
                                                            Foreground="{DynamicResource Brush.Text.Secondary}"
                                                            VerticalAlignment="Center" />
                                             </Border>
                                             <TextBlock Text="{Binding Action}"
-                                                       Margin="4,0,0,0"
+                                                       Margin="5,0,0,0"
                                                        FontFamily="{StaticResource Font.Mono}"
-                                                       FontSize="{Binding DataContext.FooterCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactValue}, ConverterParameter='10.5|9.5'}"
+                                                       FontSize="{Binding DataContext.FooterCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactValue}, ConverterParameter='11|10'}"
                                                        Foreground="{DynamicResource Brush.Text.Tertiary}"
                                                        VerticalAlignment="Center" />
                                             <!-- 字数段（备注态 n/200）：纯文本无 chip -->
                                             <TextBlock Text="{Binding Keys}"
-                                                       Margin="4,0,0,0"
+                                                       Margin="5,0,0,0"
                                                        FontFamily="{StaticResource Font.Mono}"
-                                                       FontSize="{Binding DataContext.FooterCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactValue}, ConverterParameter='10.5|9.5'}"
+                                                       FontSize="{Binding DataContext.FooterCompact, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource CompactValue}, ConverterParameter='11|10'}"
                                                        Foreground="{DynamicResource Brush.Text.Tertiary}"
                                                        VerticalAlignment="Center">
                                                 <TextBlock.Style>
@@ -759,7 +756,7 @@
                             <TextBlock Text="{Binding FooterStatus}"
                                        Visibility="{Binding FooterErrorVisible}"
                                        FontFamily="{StaticResource Font.Mono}"
-                                       FontSize="10.5"
+                                       FontSize="11"
                                        Foreground="{DynamicResource Brush.Error}"
                                        VerticalAlignment="Center" />
                         </Grid>
@@ -774,27 +771,27 @@
                       IsHitTestVisible="True">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="320">
                         <TextBlock Text="按下新的快捷键组合"
-                                   FontSize="15"
-                                   FontWeight="Medium"
+                                   FontSize="21"
+                                   FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource Brush.Text.Primary}" />
                         <TextBlock Text="需要包含 Ctrl / Alt / Win 修饰键"
-                                   Margin="0,8,0,0"
-                                   FontSize="12"
+                                   Margin="0,10,0,0"
+                                   FontSize="14"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource Brush.Text.Secondary}" />
                         <TextBlock x:Name="CaptureStatusText"
-                                   Margin="0,16,0,0"
-                                   FontSize="12"
+                                   Margin="0,20,0,0"
+                                   FontSize="13"
                                    TextWrapping="Wrap"
                                    TextAlignment="Center"
                                    HorizontalAlignment="Center"
                                    AutomationProperties.Name="{x:Static local:AccessibilityNames.CaptureStatus}"
                                    Foreground="{DynamicResource Brush.Text.Primary}" />
                         <TextBlock Text="Esc 取消"
-                                   Margin="0,16,0,0"
+                                   Margin="0,20,0,0"
                                    FontFamily="{StaticResource Font.Mono}"
-                                   FontSize="10.5"
+                                   FontSize="11"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource Brush.Text.Tertiary}" />
                     </StackPanel>
@@ -803,11 +800,10 @@
         </Border>
 
         <!-- 描边补描层（最上层）：与主描边同环，fringe 叠涂后四角粗细一致；不参与命中测试 -->
-        <Border CornerRadius="36"
-                BorderThickness="2"
+        <Border CornerRadius="28"
+                BorderThickness="1"
                 BorderBrush="{DynamicResource Brush.Window.Ring}"
                 Background="Transparent"
                 IsHitTestVisible="False" />
     </Grid>
 </Window>
-

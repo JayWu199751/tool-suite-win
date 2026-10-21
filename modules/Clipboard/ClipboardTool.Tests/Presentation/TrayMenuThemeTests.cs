@@ -20,8 +20,8 @@ public class TrayMenuThemeTests
     }
 
     [Theory]
-    [InlineData("Dark", "#FF141419", "#FFF2F2F5")]
-    [InlineData("Light", "#FFFFFFFF", "#FF1A1A20")]
+    [InlineData("Dark", "#FF1D1D1F", "#FFF5F5F7")]
+    [InlineData("Light", "#FFFFFFFF", "#FF1D1D1F")]
     public void 实际托盘菜单与主题子菜单背景文字匹配应用皮肤(string theme, string background, string foreground)
     {
         Sta.Run(() =>
@@ -36,7 +36,7 @@ public class TrayMenuThemeTests
             AssertColor(foreground, child.Foreground);
             var popup = (Popup)parent.Template.FindName("PART_Popup", parent);
             AssertColor(background, ((Border)popup.Child).Background);
-            Assert.Same(menu.FindResource("Brush.Border.Strong"), ((Border)popup.Child).BorderBrush);
+            Assert.Same(menu.FindResource("Brush.Border.Subtle"), ((Border)popup.Child).BorderBrush);
         });
     }
 
@@ -49,15 +49,15 @@ public class TrayMenuThemeTests
             using var menu = new TrayContextMenu(resources);
             menu.SetItems(Spec(), _ => { });
             Prepare(menu);
-            AssertColor("#FF141419", menu.Background);
+            AssertColor("#FF1D1D1F", menu.Background);
             resources.MergedDictionaries[0] = ThemeDictionary("Light");
             Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
             AssertColor("#FFFFFFFF", menu.Background);
-            AssertColor("#FF1A1A20", ((MenuItem)menu.Items[0]).Foreground);
+            AssertColor("#FF1D1D1F", ((MenuItem)menu.Items[0]).Foreground);
             var parent = (MenuItem)menu.Items[1];
             var popup = (Popup)parent.Template.FindName("PART_Popup", parent);
             AssertColor("#FFFFFFFF", ((Border)popup.Child).Background);
-            AssertColor("#FF1A1A20", ((MenuItem)parent.Items[0]).Foreground);
+            AssertColor("#FF1D1D1F", ((MenuItem)parent.Items[0]).Foreground);
         });
     }
 
@@ -72,7 +72,7 @@ public class TrayMenuThemeTests
             Assert.False(theme.IsTrayDark);
             using var menu = CreateMenu(theme.IsPanelDark ? "Dark" : "Light");
             Prepare(menu);
-            AssertColor("#FF141419", menu.Background);
+            AssertColor("#FF1D1D1F", menu.Background);
         });
     }
 
