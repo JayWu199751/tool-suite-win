@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <!-- 版本与程序集信息（发布说明见 docs/release.md）。 -->
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>性能小窗</Product>
+    <AssemblyTitle>性能小窗（PerfMonitor WPF 版）</AssemblyTitle>
+    <Description>Windows 桌面性能悬浮条（CPU/内存/GPU/网络），WPF 重写版。</Description>
+    <Company>PerfMonitor-WPF</Company>
+    <Copyright>Copyright © 2026</Copyright>
+    <NeutralLanguage>zh-CN</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PerfMonitor.App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PerfMonitor.Core\PerfMonitor.Core.csproj" />
+    <ProjectReference Include="..\..\src\PerfMonitor.Windows\PerfMonitor.Windows.csproj" />
+    <ProjectReference Include="../../../../src/ToolSuite.Core/ToolSuite.Core.csproj" />
+  </ItemGroup>
+
+</Project>
