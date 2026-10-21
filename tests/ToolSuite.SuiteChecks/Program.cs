@@ -24,6 +24,7 @@ internal static class Program
             try
             {
                 var log = new List<string>();
+                ContractSingleSourceChecks.Run(Path.Combine(root, "single-source"), log);
                 await ControllerSemanticsChecks.RunAsync(Path.Combine(root, "controller"), log);
                 await HostIntegrationChecks.RunAsync(Path.Combine(root, "host"), log);
                 foreach (var line in log) Console.WriteLine("PASS " + line);

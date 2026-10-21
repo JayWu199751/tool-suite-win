@@ -8,10 +8,7 @@ public sealed class SuiteSettings
 {
     public ThemePreference Theme { get; set; } = ThemePreference.System;
     public bool StartWithWindows { get; set; }
-    public Dictionary<string, bool> EnabledTools { get; set; } = new()
-    {
-        ["clipboard"] = true, ["perf-monitor"] = true, ["pinto"] = true
-    };
+    public Dictionary<string, bool> EnabledTools { get; set; } = ToolIds.All.ToDictionary(id => id, _ => true);
 }
 
 public sealed class SuiteSettingsStore
@@ -33,7 +30,7 @@ public sealed class SuiteSettingsStore
         var settings = JsonSerializer.Deserialize<SuiteSettings>(File.ReadAllText(path))
             ?? throw new InvalidDataException("套件设置为空。");
         if (!Enum.IsDefined(settings.Theme)) throw new InvalidDataException("无效的主题配置。");
-        foreach (var id in new[] { "clipboard", "perf-monitor", "pinto" }) settings.EnabledTools.TryAdd(id, true);
+        foreach (var id in ToolIds.All) settings.EnabledTools.TryAdd(id, true);
         return settings;
     }
     public void Save(SuiteSettings settings)

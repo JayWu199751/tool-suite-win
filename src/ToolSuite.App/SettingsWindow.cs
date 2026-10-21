@@ -93,11 +93,5 @@ internal sealed class SettingsWindow : Window
     internal ComboBox ThemeSelectorForVerification => themes;
     internal CheckBox StartWithWindowsToggleForVerification => startWithWindows;
     internal TextBlock AutoStartStatusForVerification => autoStartStatus;
-    internal static string StateLabel(ToolStatus tool) => tool.State switch
-    {
-        ToolState.Unavailable => "尚未接入，此版本不可用；启用偏好已保留。",
-        ToolState.Running => tool.Error is null ? "运行中" : $"运行中；操作失败：{tool.Error}",
-        ToolState.Disabled => "已停用",
-        _ => $"启动或停止失败：{tool.Error}（可重新启用重试）"
-    };
+    internal static string StateLabel(ToolStatus tool) => ToolStateText.Detail(tool);
 }
