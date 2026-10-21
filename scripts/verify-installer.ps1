@@ -29,6 +29,11 @@ function Invoke-Smoke([string]$setup) {
     if ($null -ne (Get-ItemProperty -Path $runKey -Name 'ToolSuite.Suite' -ErrorAction SilentlyContinue)) {
         throw '已存在 ToolSuite.Suite 开机启动值，跳过冒烟以免改动真实启动项。'
     }
+    foreach ($shortcut in @(
+        (Join-Path ([Environment]::GetFolderPath('Programs')) '工具套件.lnk'),
+        (Join-Path ([Environment]::GetFolderPath('DesktopDirectory')) '工具套件.lnk'))) {
+        if (Test-Path $shortcut) { throw "已存在套件快捷方式 $shortcut，跳过冒烟以免卸载时删除真实快捷方式。" }
+    }
     $smokeRoot = Join-Path $repoRoot 'artifacts/installer-smoke'
     $install = Join-Path $smokeRoot 'ToolSuite'
     if (Test-Path $smokeRoot) { [IO.Directory]::Delete($smokeRoot, $true) }

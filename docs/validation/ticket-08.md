@@ -35,8 +35,8 @@
 - `./scripts/build-installer.ps1 -Dotnet "C:/Users/10854/AppData/Local/Microsoft/dotnet/dotnet.exe"`
   → 自包含发布与单文件安装包构建成功。产物：
   - 安装包：`artifacts/installer/ToolSuite-Setup-1.0.0.exe`
-  - 大小：125,905,756 字节（120.1 MB）
-  - SHA-256：`87acec34f8fbfde02eaf6fc6f8540cdbfc49b81b952e7f8b5f00c2334b63f8c8`
+  - 大小：125,906,764 字节（120.1 MB）
+  - SHA-256：`13c10736514f6349a020b88a866a21d4ad87abaeb94c68e469ba3b6a52688cd2`
   - 发布目录：`artifacts/publish/win-x64`（174 MB，含 `coreclr.dll`、`hostfxr.dll`、
     `hostpolicy.dll`、`PresentationFramework.dll`、`PresentationCore.dll`、`WindowsBase.dll` 等）
   - 载荷：`artifacts/publish/ToolSuite-win-x64.zip`
@@ -87,7 +87,8 @@
   `SetEnabledAsync`；停用工具保持停用。便签模块只对 `IsVisible` 的便签建窗，隐藏便签保持无窗口。
 - **安装/升级/卸载**：安装器先解压到同级 staging，确认载荷含 `ToolSuite.exe` 后整体替换；
   升级前对套件 EXE 与安装目录内的卸载入口做独占打开检查，占用时抛出
-  `InstallerBlockedException`（可重试），旧目录先移到备份位，替换失败可恢复。卸载只删除
+  `InstallerBlockedException`（可重试），旧目录先移到备份位，替换失败可恢复；
+  只有新安装目录已就位时才丢弃旧备份，恢复失败时保留旧安装。卸载只删除
   安装目录、`Uninstall\ToolSuite`、`ToolSuite.Suite` 启动值和套件快捷方式，不引用
   `%LOCALAPPDATA%/ToolSuite`；从安装目录内卸载入口运行时保留自身，由独立 `cmd` 在进程退出后清理。
 - **打包**：`PublishSingleFile` + `SelfContained`，载荷 zip 作为嵌入资源；安装器与套件发布均在

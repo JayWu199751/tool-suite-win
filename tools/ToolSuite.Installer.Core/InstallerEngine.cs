@@ -65,7 +65,8 @@ public sealed class InstallerEngine(IRegistryAccess registry, IShortcutWriter sh
         finally
         {
             if (Directory.Exists(staging)) TryDeleteDirectory(staging);
-            if (Directory.Exists(previous)) TryDeleteDirectory(previous);
+            // 旧目录只在新安装已就位时丢弃；若恢复失败，previous 是用户唯一的旧安装，必须保留。
+            if (Directory.Exists(previous) && Directory.Exists(install)) TryDeleteDirectory(previous);
         }
 
         WriteUninstallRegistration(install);
