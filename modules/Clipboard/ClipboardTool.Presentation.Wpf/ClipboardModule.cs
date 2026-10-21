@@ -41,7 +41,22 @@ public sealed class ClipboardModule : ToolSuite.Core.IToolModule
     public string Id => "clipboard";
     public string DisplayName => "剪贴板";
     public IReadOnlyList<ToolSuite.Core.ToolCommand> Commands =>
-        [new("change-shortcut", "修改剪贴板快捷键", _ => { OpenShortcutSettings(); return Task.CompletedTask; }, false)];
+        [
+            new("change-shortcut", "修改剪贴板快捷键", _ => { OpenShortcutSettings(); return Task.CompletedTask; }, false),
+            // 清空历史（规格「剪贴板分组包含…清空历史」）：与 legacy 一致立即执行、无确认窗，
+            // 完成经 toast 反馈；条目与 PNG 联动、待删除计时一并取消（次序收口在 PendingDeletionService.ClearAll）。
+            new("clear-history", "清空历史", _ => { ClearHistory(); return Task.CompletedTask; }),
+        ];
+
+    /// <summary>清空全部历史（托盘命令）。运行期入口：先取消未到期的删除撤销窗口，再清条目与图片文件，
+    /// 列表随历史变更事件重载（缩略图缓存按消失 id 差量失效），最后给出结果反馈。</summary>
+    public void ClearHistory()
+    {
+        if (_deletion is null || _history is null) throw new InvalidOperationException("剪贴板未运行。");
+        _deletion.ClearAll();
+        _panel?.ReloadEntries(_history.Entries, _deletion.HiddenIds);
+        _panel?.ShowToast("已清空历史", null, isError: false, actionLabel: null, onAction: null);
+    }
 
     /// <summary>焦点快照的真源在协调器（FocusTargetSnapshot）：呼出时补拍、退出输入态复用、
     /// 隐藏面板时消费。粘贴链路经端口读取同一份，不再有第二份存储。</summary>

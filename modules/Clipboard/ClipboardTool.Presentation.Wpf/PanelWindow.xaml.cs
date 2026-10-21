@@ -203,7 +203,8 @@ public partial class PanelWindow : Window
         }
 
         _docked = false;
-        ForEachThumbnailHost(host => host.Request()); // 呼出预热已实现容器（停靠时已回收）
+        // 呼出才允许取图：闸门置 true 时已实现容器（绑定触发）自行补取，收起期间不产生解码工作。
+        _viewModel.ThumbnailsEnabled = true;
     }
 
     /// <summary>停靠：屏外驻留（工作区右缘外 20 DIP、y=工作区顶），窗口不销毁。</summary>
@@ -217,8 +218,9 @@ public partial class PanelWindow : Window
         WindowPlacer.PlaceDip(Hwnd, screen, position, widthDip, heightDip);
 
         _docked = true;
-        // 停靠回收不可见项（T06）：清空缩略图缓存 + 释放已实现容器的位图引用；
-        // 迟到的解码结果被缓存/宿主的代次与失效规则丢弃
+        // 停靠回收不可见项（T06）：先关取图闸门（此后新增/换绑都不解码），再清缩略图缓存 +
+        // 释放已实现容器的位图引用；迟到的解码结果被缓存/宿主的代次与失效规则丢弃
+        _viewModel.ThumbnailsEnabled = false;
         _viewModel.Thumbnails?.Clear();
         ForEachThumbnailHost(host => host.Reset());
     }

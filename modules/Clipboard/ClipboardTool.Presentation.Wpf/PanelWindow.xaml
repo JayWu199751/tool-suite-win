@@ -368,6 +368,7 @@
                                                      BorderBrush="{DynamicResource Brush.Border.Subtle}"
                                                      BorderThickness="1"
                                                      Cache="{Binding DataContext.Thumbnails, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                     LoadEnabled="{Binding DataContext.ThumbnailsEnabled, RelativeSource={RelativeSource AncestorType=Window}}"
                                                      EntryId="{Binding Id}"
                                                      ImagePath="{Binding ImagePath}" />
                                 <!-- 文件名行（F42）：mono 12 号单行省略；缩略图→文件名的 12 DIP 间距归缩略图 Margin -->
