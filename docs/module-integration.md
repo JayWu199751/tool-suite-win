@@ -4,7 +4,7 @@
 
 公开契约在 `src/ToolSuite.Core/IToolModule.cs`，真实控制入口在 `SuiteController.cs`：
 
-- ID 使用 `clipboard`、`perf-monitor`、`pinto`。
+- ID 使用 `clipboard`、`perf-monitor`、`pinto`、`reminders`，展示名与顺序统一由 `ToolIds.Catalog` 定义。循环提醒是后续新增模块，位于 `modules/Reminders`，初始提醒列表为空。
 - `Configure(ModuleContext)` 是默认兼容入口，冷启动对所有模块调用，包括已停用工具；只保存轻量上下文，不建立窗口或监听。离线配置因此可以拿到独立数据位置，不需要隐式启用。`StartAsync` 也收到同样上下文，模块直接检查时可调用自己的 Configure。
 - `StartAsync(ModuleContext, CancellationToken)` 在 UI 线程启动/重建。上下文指定套件模块专用 `DataDirectory`、当前有效 `Theme`（Light 或 Dark）和错误报告入口。每次启用可重新建立窗口；构造函数不分配后台资源。
 - `PrepareToStopAsync` 提交编辑、捕获布局、保存；失败抛异常，保留窗口与可恢复内容。宿主在停用及退出前调用。

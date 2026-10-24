@@ -13,7 +13,7 @@ using TextBox = System.Windows.Controls.TextBox;
 
 namespace ToolSuite.App;
 
-/// <summary>在性能条原设置窗口中组合通用偏好及三个工具；模块仍负责自己的配置事务。</summary>
+/// <summary>在性能条原设置窗口中组合通用偏好及各个工具；模块仍负责自己的配置事务。</summary>
 internal sealed class UnifiedSettingsPage
 {
     private readonly SuiteController controller;
@@ -52,6 +52,8 @@ internal sealed class UnifiedSettingsPage
             if (tool.Id == ToolIds.Clipboard) body.Children.Add(BuildClipboard());
             if (tool.Id == ToolIds.PerfMonitor) body.Children.Add(performance);
             if (tool.Id == ToolIds.Pinto) body.Children.Add(BuildNotes());
+            if (tool.Id == ToolIds.Reminders && controller.GetModule<ToolSuite.Reminders.ReminderModule>(tool.Id) is { } reminders)
+                body.Children.Add(new ToolSuite.Reminders.ReminderSettingsControl(reminders));
             var heading = new StackPanel();
             var name = Text(tool.DisplayName, "SuiteInk", 15);
             name.FontWeight = FontWeights.SemiBold;

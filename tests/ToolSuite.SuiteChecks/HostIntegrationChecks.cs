@@ -282,11 +282,11 @@ internal static class HostIntegrationChecks
     private static void AssertThreeGroups(TrayHost tray)
     {
         var menu = tray.MenuForVerification;
-        foreach (var id in new[] { "clipboard", "perf-monitor", "pinto" })
+        foreach (var id in ToolIds.All)
             Assert(Group(tray, id) is not null, $"托盘缺少工具分组：{id}");
         Assert(menu.Items.OfType<MenuItem>().Any(x => (string?)x.Tag == "settings")
                 && menu.Items.OfType<MenuItem>().Any(x => (string?)x.Tag == "exit"), "托盘必须提供统一设置与退出");
-        Assert(menu.Items.Count == 6, "托盘应只有三个工具分组、分隔、设置与退出");
+        Assert(menu.Items.Count == ToolIds.All.Count + 3, "托盘应只有登记工具分组、分隔、设置与退出");
     }
 
     /// <summary>托盘浮层必须用套件自己的卡片模板。ContextMenu 是弹出层的根元素，WPF 不会把它

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <StartupObject>ToolSuite.InstallerUiChecks.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 直接编译真实窗口，检查无需嵌入安装载荷，也不会执行安装入口。 -->
+    <Compile Include="../../tools/ToolSuite.Installer/*.cs" Link="Installer/%(Filename)%(Extension)" />
+    <ProjectReference Include="../../tools/ToolSuite.Installer.Core/ToolSuite.Installer.Core.csproj" />
+    <ProjectReference Include="../../src/ToolSuite.Core/ToolSuite.Core.csproj" />
+    <ProjectReference Include="../../src/ToolSuite.Windows/ToolSuite.Windows.csproj" />
+  </ItemGroup>
+</Project>

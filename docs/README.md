@@ -2,6 +2,8 @@
 
 ## 当前维护
 
+- [循环提醒工具](interval-reminders.md)：指定间隔、多提醒、确认后重计时与锁屏规则；[界面设计](interval-reminders-design.md)记录 apple-design 的 WPF 落地。
+  [验证记录](validation/interval-reminders.md)包含自动检查、对比度与待人工复验的系统场景。
 - [交付说明](handoff.md)：安装、升级、卸载与日常操作。
 - [统一设置页面](unified-settings.md)：通用偏好、三个工具的折叠分类与验收范围。
   [验证记录](validation/unified-settings.md)包含本次回归、视觉检查与审查修复结果。

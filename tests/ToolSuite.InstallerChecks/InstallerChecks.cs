@@ -263,7 +263,8 @@ internal static class InstallerChecks
         var registry = new FakeRegistry();
         SeedOldApplications(registry);
         var shortcuts = new FakeShortcutWriter();
-        var engine = new InstallerEngine(registry, shortcuts, CreateSetup(baseDir), "1.0.0");
+        var startupTasks = new FakeRunStore();
+        var engine = new InstallerEngine(registry, shortcuts, CreateSetup(baseDir), "1.0.0", startupTasks);
         engine.Install(Payload(baseDir, "1.0.0"), install, startMenu: true, desktop: false);
 
         var data = Path.Combine(baseDir, "user-data", "ToolSuite");
@@ -284,7 +285,13 @@ internal static class InstallerChecks
             Assert(Directory.Exists(install), "被占用时不得删除安装目录");
         }
 
+        startupTasks.Values[SuiteIdentity.RunValueName] = '"' + exe + '"';
+        startupTasks.FailDeletes = true;
+        Throws<UnauthorizedAccessException>(() => engine.Uninstall(install));
+        Assert(File.Exists(exe), "清理登录任务失败必须保留安装文件，以便提权后重试");
+        startupTasks.FailDeletes = false;
         engine.Uninstall(install);
+        Assert(!startupTasks.Values.ContainsKey(SuiteIdentity.RunValueName), "卸载必须清理登录计划任务");
         Assert(!Directory.Exists(install), "卸载必须删除套件安装目录");
         Assert(Directory.GetDirectories(Path.GetDirectoryName(install)!, "ToolSuite.*").Length == 0, "卸载不得遗留暂存或备份目录");
         Assert(registry.ReadString(RegistryHiveKind.CurrentUser, InstallerEngine.UninstallKeyPath, "DisplayName") is null,

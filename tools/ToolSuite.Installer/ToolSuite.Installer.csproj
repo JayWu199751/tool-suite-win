@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="../ToolSuite.Installer.Core/ToolSuite.Installer.Core.csproj" />
     <ProjectReference Include="../../src/ToolSuite.Core/ToolSuite.Core.csproj" />
+    <ProjectReference Include="../../src/ToolSuite.Windows/ToolSuite.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(PayloadZip)" LogicalName="ToolSuite.Installer.payload.zip" Condition="Exists('$(PayloadZip)')" />

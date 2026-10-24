@@ -7,10 +7,11 @@ public static class ToolIds
     public const string Clipboard = "clipboard";
     public const string PerfMonitor = "perf-monitor";
     public const string Pinto = "pinto";
+    public const string Reminders = "reminders";
 
     /// <summary>对外展示顺序即控制器与托盘的顺序，不得随意调整。</summary>
     public static IReadOnlyList<(string Id, string Name)> Catalog { get; } =
-        [(Clipboard, "剪贴板"), (PerfMonitor, "性能条"), (Pinto, "便签")];
+        [(Clipboard, "剪贴板"), (PerfMonitor, "性能条"), (Pinto, "便签"), (Reminders, "循环提醒")];
 
     public static IReadOnlyList<string> All { get; } = Catalog.Select(x => x.Id).ToArray();
 }

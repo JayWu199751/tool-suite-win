@@ -17,14 +17,14 @@ internal static class ContractSingleSourceChecks
     private static void CatalogContract(string root)
     {
         var ids = ToolIds.Catalog.Select(x => x.Id).ToArray();
-        Assert(ids.SequenceEqual(new[] { "clipboard", "perf-monitor", "pinto" }),
+        Assert(ids.SequenceEqual(new[] { "clipboard", "perf-monitor", "pinto", "reminders" }),
             "模块标识顺序必须与公开契约一致：" + string.Join(",", ids));
-        Assert(ToolIds.Catalog.Select(x => x.Name).SequenceEqual(new[] { "剪贴板", "性能条", "便签" }),
+        Assert(ToolIds.Catalog.Select(x => x.Name).SequenceEqual(new[] { "剪贴板", "性能条", "便签", "循环提醒" }),
             "模块显示名必须与公开契约一致");
 
         var defaults = new SuiteSettings().EnabledTools;
         Assert(defaults.Count == ids.Length && ids.All(id => defaults.TryGetValue(id, out var on) && on),
-            "默认设置必须只包含三个工具且全部启用");
+            "默认设置必须包含全部登记工具且全部启用；新提醒工具初始没有提醒");
 
         Directory.CreateDirectory(root);
         File.WriteAllText(Path.Combine(root, "suite.json"),

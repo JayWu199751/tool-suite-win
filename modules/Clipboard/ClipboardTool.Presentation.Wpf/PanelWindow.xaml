@@ -48,7 +48,7 @@
             </DrawingBrush.Drawing>
         </DrawingBrush>
 
-        <!-- 卡片容器：圆角 20、1 DIP 发丝线、内边距 16/14；hover 只加深描边，选中用淡蓝染 + 蓝色描边。
+        <!-- 卡片容器：圆角 12、1 DIP 发丝线、内边距 12/10；hover 只加深描边，选中用淡蓝染 + 蓝色描边。
              Padding/Margin 显式清零 + Stretch：ListBoxItem 默认 Padding=1 会让卡片内缩、
              右细线在 175% DPI 的亚像素相位下被背景吞掉，左右边距不再对称 -->
         <Style x:Key="CardContainerStyle" TargetType="ListBoxItem">
@@ -64,9 +64,9 @@
                                 Background="{DynamicResource Brush.Card}"
                                 BorderBrush="{DynamicResource Brush.Border.Subtle}"
                                 BorderThickness="1"
-                                CornerRadius="20"
-                                Padding="16,14"
-                                Margin="0,0,0,8"
+                                CornerRadius="12"
+                                Padding="12,10"
+                                Margin="0,0,0,4"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter />
                         </Border>
@@ -97,22 +97,22 @@
                 Background="{DynamicResource Brush.App}">
             <Grid x:Name="ShellRows" SizeChanged="OnShellRowsSizeChanged">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="68" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="40" />
                 </Grid.RowDefinitions>
 
-                <!-- 搜索头：Paper 色带（与列表的画布色带形成交替），左右 16。
-                     搜索井高 40 胶囊，无重描边；浏览态输入框只读（模式在主进程侧），点击井 = 进搜索 -->
-                <Border Grid.Row="0" Background="{DynamicResource Brush.Card}">
-                    <Grid Margin="16,0">
+                <!-- 搜索头：与列表共用画布背景色，上左右间距 12、下 8，与列表左右间距一致。
+                     搜索井高 32 胶囊，0.5 DIP 灰色描边；浏览态输入框只读（模式在主进程侧），点击井 = 进搜索 -->
+                <Border Grid.Row="0" Background="{DynamicResource Brush.App}">
+                    <Grid Margin="12,12,12,8">
                         <Border x:Name="SearchWell"
-                                Height="40"
+                                Height="32"
                                 VerticalAlignment="Center"
                                 Background="{DynamicResource Brush.Input}"
-                                BorderBrush="{DynamicResource Brush.Border.Subtle}"
-                                BorderThickness="1"
-                                CornerRadius="20"
+                                BorderBrush="#28282A"
+                                BorderThickness="0.5"
+                                CornerRadius="16"
                                 Padding="14,0,10,0"
                                 PreviewMouseLeftButtonDown="OnSearchWellPress">
                             <Grid>
@@ -315,12 +315,12 @@
                     </Grid>
                 </Border>
 
-                <!-- 列表：上左右 16、下 20，卡片间 8；虚拟化 + 回收。
+                <!-- 列表：左右间距 12、下方间距 8，上方间距由搜索头的底部留白提供，卡片间 4；虚拟化 + 回收。
                      原生滚动条隐藏且不占位（对齐原型 scrollbar-width:none）：Hidden 仅不绘制、
                      仍按滚动条期望宽度压缩视口，导致卡片右缘被裁、右细线消失，故将宽度钳为 0 -->
                 <ListBox x:Name="HistoryList"
                          Grid.Row="1"
-                         Margin="16,16,16,20"
+                         Margin="12,0,12,8"
                          ItemsSource="{Binding Items}"
                          ItemContainerStyle="{StaticResource CardContainerStyle}"
                          Background="Transparent"

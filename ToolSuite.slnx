@@ -2,9 +2,11 @@
   <Folder Name="/src/">
     <Project Path="src/ToolSuite.App/ToolSuite.App.csproj" />
     <Project Path="src/ToolSuite.Core/ToolSuite.Core.csproj" />
+    <Project Path="src/ToolSuite.Windows/ToolSuite.Windows.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ToolSuite.HostChecks/ToolSuite.HostChecks.csproj" />
+    <Project Path="tests/ToolSuite.InstallerUiChecks/ToolSuite.InstallerUiChecks.csproj" />
   </Folder>
   <Folder Name="/modules/Clipboard/"><Project Path="modules/Clipboard/ClipboardTool.Presentation.Wpf/ClipboardTool.Presentation.Wpf.csproj" /><Project Path="modules/Clipboard/ClipboardTool.Tests/ClipboardTool.Tests.csproj" /></Folder>
   <Folder Name="/modules/PerfMonitor/">
@@ -23,5 +25,9 @@
     <Project Path="modules/Pinto/tests/Pinto.ModuleChecks/Pinto.ModuleChecks.csproj" />
   </Folder>
   <Folder Name="/checks/"><Project Path="tests/ToolSuite.ClipboardUiChecks/ToolSuite.ClipboardUiChecks.csproj" /><Project Path="tests/ToolSuite.ClipboardChecks/ToolSuite.ClipboardChecks.csproj" /><Project Path="tests/ToolSuite.SuiteChecks/ToolSuite.SuiteChecks.csproj" /><Project Path="tests/ToolSuite.LifecycleChecks/ToolSuite.LifecycleChecks.csproj" /><Project Path="tests/ToolSuite.InstallerChecks/ToolSuite.InstallerChecks.csproj" /></Folder>
+  <Folder Name="/modules/Reminders/">
+    <Project Path="modules/Reminders/ToolSuite.Reminders/ToolSuite.Reminders.csproj" />
+    <Project Path="tests/ToolSuite.ReminderChecks/ToolSuite.ReminderChecks.csproj" />
+  </Folder>
   <Folder Name="/tools/"><Project Path="tools/ToolSuite.Installer.Core/ToolSuite.Installer.Core.csproj" /></Folder>
 </Solution>

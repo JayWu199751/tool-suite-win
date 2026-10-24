@@ -1,9 +1,11 @@
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace ToolSuite.Installer;
 
 /// <summary>安装 / 卸载对话框。视觉语言见 docs/design-system.md：
-/// 浅色画布 (#F5F5F7)、白色 20 DIP 圆角卡片、主操作蓝色胶囊、次操作幽灵胶囊、零投影。
+/// 跟随系统亮暗主题、20 DIP 圆角卡片、主操作胶囊、次操作幽灵胶囊、零投影。
 ///
 /// 整个客户区由本窗口一次画完（唯一子控件是安装目录输入框）：
 /// 之前把卡片/按钮/勾选各自做成自绘子控件时，多个控件的表面会互相覆盖，
@@ -34,6 +36,8 @@ internal sealed class InstallerForm : Form
         "不会读取、迁移或修改原三个应用的数据与启动项；卸载会保留用户数据。";
 
     private readonly TextBox directory;
+    private readonly Func<bool> readSystemDark;
+    private Palette palette = new(false);
     private readonly Font titleFont = Palette.Title(15.5f);
     private readonly Font subtitleFont = Palette.Text(9f);
     private readonly Font smallFont = Palette.Text(8.5f);
@@ -42,7 +46,7 @@ internal sealed class InstallerForm : Form
     private bool startMenu;
     private bool desktop;
     private string statusText = DefaultStatus;
-    private Color statusColor = Palette.InkSecondary;
+    private bool statusIsError;
     private bool retryVisible;
     private Action? retryAction;
 
@@ -50,8 +54,11 @@ internal sealed class InstallerForm : Form
     private Target pressed;
     private Target focus;
 
-    public InstallerForm(InstallerOptions options)
+    public InstallerForm(InstallerOptions options) : this(options, ReadSystemDark) { }
+
+    internal InstallerForm(InstallerOptions options, Func<bool> readSystemDark)
     {
+        this.readSystemDark = readSystemDark;
         startMenu = options.StartMenu;
         desktop = options.Desktop;
 
@@ -59,8 +66,8 @@ internal sealed class InstallerForm : Form
         Font = Palette.Text(9);
         // 自己按 DPI 换算几何，不能让 WinForms 再缩放一遍。
         AutoScaleMode = AutoScaleMode.None;
-        BackColor = Palette.Canvas;
-        ForeColor = Palette.Ink;
+        BackColor = palette.Canvas;
+        ForeColor = palette.Ink;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -74,17 +81,58 @@ internal sealed class InstallerForm : Form
         {
             Text = options.InstallDirectory,
             BorderStyle = BorderStyle.None,
-            BackColor = Palette.Well,
-            ForeColor = Palette.Ink,
+            BackColor = palette.Well,
+            ForeColor = palette.Ink,
             Font = bodyFont
         };
         Controls.Add(directory);
 
+        ApplyTheme();
         ApplyDpi();
         statusText = DefaultStatus;
     }
 
     private float DpiScale => DeviceDpi / 96f;
+
+    private static bool ReadSystemDark()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            return key?.GetValue("AppsUseLightTheme") is int value && value == 0;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            return false;
+        }
+    }
+
+    private void ApplyTheme()
+    {
+        var dark = !SystemInformation.HighContrast && readSystemDark();
+        palette = new Palette(dark, SystemInformation.HighContrast);
+        BackColor = palette.Canvas;
+        ForeColor = palette.Ink;
+        directory.BackColor = palette.Well;
+        directory.ForeColor = palette.Ink;
+        if (IsHandleCreated)
+        {
+            var enabled = dark ? 1 : 0;
+            _ = DwmSetWindowAttribute(Handle, 20, ref enabled, sizeof(int));
+        }
+        Invalidate(true);
+    }
+
+    protected override void WndProc(ref Message message)
+    {
+        base.WndProc(ref message);
+        // WM_SETTINGCHANGE / WM_THEMECHANGED / WM_SYSCOLORCHANGE：无需全局静态事件订阅。
+        if (message.Msg is 0x001A or 0x031A or 0x0015 && directory is not null)
+            ApplyTheme();
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
     private int S(int dip) => (int)Math.Round(dip * DpiScale);
 
@@ -105,6 +153,7 @@ internal sealed class InstallerForm : Form
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
+        ApplyTheme();
         ApplyDpi();
     }
 
@@ -127,20 +176,20 @@ internal sealed class InstallerForm : Form
     protected override void OnPaint(PaintEventArgs e)
     {
         var g = e.Graphics;
-        g.Clear(Palette.Canvas);
+        g.Clear(palette.Canvas);
         g.SmoothingMode = SmoothingMode.AntiAlias;
 
-        Chrome.Text(g, "工具套件安装程序", titleFont, D(TitleDip), Palette.Ink,
+        Chrome.Text(g, "工具套件安装程序", titleFont, D(TitleDip), palette.Ink,
             TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.SingleLine);
-        Chrome.Text(g, "安装到当前用户目录，不需要管理员权限。", subtitleFont, D(SubtitleDip), Palette.InkSecondary,
+        Chrome.Text(g, "安装到当前用户目录，不需要管理员权限。", subtitleFont, D(SubtitleDip), palette.InkSecondary,
             TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.SingleLine);
 
-        Chrome.Card(g, D(DirectoryCardDip), S(20), Palette.Card, Color.Empty);
-        Chrome.Text(g, "安装目录", smallFont, D(DirectoryLabelDip), Palette.InkSecondary,
+        Chrome.Card(g, D(DirectoryCardDip), S(20), palette.Card, Color.Empty);
+        Chrome.Text(g, "安装目录", smallFont, D(DirectoryLabelDip), palette.InkSecondary,
             TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.SingleLine);
-        Chrome.Card(g, D(DirectoryWellDip), S(12), Palette.Well, Palette.Hairline);
+        Chrome.Card(g, D(DirectoryWellDip), S(12), palette.Well, palette.Hairline);
 
-        Chrome.Card(g, D(ShortcutCardDip), S(20), Palette.Card, Color.Empty);
+        Chrome.Card(g, D(ShortcutCardDip), S(20), palette.Card, Color.Empty);
         DrawCheckRow(g, Target.StartMenu, StartMenuRowDip, "创建开始菜单快捷方式", startMenu);
         DrawCheckRow(g, Target.Desktop, DesktopRowDip, "创建桌面快捷方式", desktop);
 
@@ -149,8 +198,8 @@ internal sealed class InstallerForm : Form
         DrawPill(g, Target.Uninstall, UninstallDip, "卸载", subtitleFont, primary: false);
         if (retryVisible) DrawPill(g, Target.Retry, RetryDip, "重试", subtitleFont, primary: false);
 
-        Chrome.Card(g, D(StatusCardDip), S(20), Palette.Card, Color.Empty);
-        Chrome.Text(g, statusText, smallFont, D(StatusTextDip), statusColor,
+        Chrome.Card(g, D(StatusCardDip), S(20), palette.Card, Color.Empty);
+        Chrome.Text(g, statusText, smallFont, D(StatusTextDip), statusIsError ? palette.Danger : palette.InkSecondary,
             TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak);
     }
 
@@ -158,14 +207,14 @@ internal sealed class InstallerForm : Form
     {
         var row = D(dip);
         var isHover = hover == target;
-        if (isHover) Chrome.Card(g, row, S(8), Palette.Hover, Color.Empty);
+        if (isHover) Chrome.Card(g, row, S(8), palette.Hover, Color.Empty);
 
         var size = S(16);
         var box = new Rectangle(row.Left, row.Top + (row.Height - size) / 2, size, size);
-        Chrome.Check(g, box, isChecked, isHover, Palette.Strong);
+        Chrome.Check(g, box, isChecked, isHover, palette);
 
         var textRect = new Rectangle(box.Right + S(8), row.Top, Math.Max(0, row.Right - box.Right - S(8)), row.Height);
-        Chrome.Text(g, text, subtitleFont, textRect, Palette.Ink,
+        Chrome.Text(g, text, subtitleFont, textRect, palette.Ink,
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
 
         if (focus == target) DrawRing(g, row);
@@ -177,18 +226,18 @@ internal sealed class InstallerForm : Form
         var isHover = hover == target;
         var isPressed = pressed == target;
         var fill = primary
-            ? (isPressed ? Palette.AccentHover : isHover ? Palette.AccentHover : Palette.Accent)
-            : (isHover || isPressed ? Palette.Hover : Color.Empty);
-        var stroke = primary ? Color.Empty : (isHover ? Palette.InkSecondary : Palette.Strong);
-        var ink = primary ? Color.White : Palette.Ink;
+            ? (isPressed ? palette.AccentHover : isHover ? palette.AccentHover : palette.Accent)
+            : (isHover || isPressed ? palette.Hover : Color.Empty);
+        var stroke = primary ? Color.Empty : (isHover ? palette.InkSecondary : palette.Strong);
+        var ink = primary ? palette.OnAccent : palette.Ink;
         Chrome.Pill(g, rect, fill, stroke, text, font, ink);
         if (focus == target) DrawRing(g, rect);
     }
 
-    private static void DrawRing(Graphics g, Rectangle rect)
+    private void DrawRing(Graphics g, Rectangle rect)
     {
         using var path = Rounded.Path(rect, rect.Height / 2);
-        using var pen = new Pen(Palette.FocusRing, 2f);
+        using var pen = new Pen(palette.FocusRing, 2f);
         g.DrawPath(pen, path);
     }
 
@@ -319,7 +368,7 @@ internal sealed class InstallerForm : Form
     {
         retryVisible = false;
         retryAction = null;
-        statusColor = Palette.InkSecondary;
+        statusIsError = false;
         statusText = mode == InstallerMode.Uninstall ? "正在卸载…" : "正在安装…";
         Invalidate();
         Update();
@@ -342,14 +391,14 @@ internal sealed class InstallerForm : Form
         {
             // 明确要求退出后重试，不静默覆盖正在运行的文件。
             statusText = ex.Message + "\r\n退出工具套件后点击“重试”。";
-            statusColor = Palette.Danger;
+            statusIsError = true;
             retryAction = () => Run(mode);
             retryVisible = true;
         }
         catch (Exception ex)
         {
             statusText = (mode == InstallerMode.Uninstall ? "卸载失败：" : "安装失败：") + ex.Message;
-            statusColor = Palette.Danger;
+            statusIsError = true;
         }
         Invalidate();
     }

@@ -44,7 +44,7 @@ public sealed class SuiteController
         this.modules = modules.ToDictionary(x => x.Id);
         this.autoStart = autoStart;
         Settings = store.Load();
-        // 注册表是开机启动的实际状态来源：外部删除或写入失败的残留都不能显示成已生效。
+        // 自启存储是实际状态来源：外部删除、禁用或注册失败不得显示成已生效。
         if (autoStart is not null)
         {
             try { Settings.StartWithWindows = autoStart.IsRegistered; }

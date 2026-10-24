@@ -17,8 +17,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../ToolSuite.Core/ToolSuite.Core.csproj" />
+    <ProjectReference Include="../ToolSuite.Windows/ToolSuite.Windows.csproj" />
     <ProjectReference Include="../../modules/Clipboard/ClipboardTool.Presentation.Wpf/ClipboardTool.Presentation.Wpf.csproj" />
     <ProjectReference Include="../../modules/PerfMonitor/src/PerfMonitor.App/PerfMonitor.App.csproj" />
     <ProjectReference Include="../../modules/Pinto/src/Pinto/Pinto.csproj" />
+    <ProjectReference Include="../../modules/Reminders/ToolSuite.Reminders/ToolSuite.Reminders.csproj" />
   </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@ public static class ModuleCatalog
     [
         new ClipboardTool.Presentation.Wpf.ClipboardModule(),
         new PerfMonitor.App.PerfMonitorModule(),
-        new Pinto.PintoModule()
+        new Pinto.PintoModule(),
+        new ToolSuite.Reminders.ReminderModule()
     ];
 }

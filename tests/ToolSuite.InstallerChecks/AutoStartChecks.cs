@@ -7,7 +7,7 @@ using Application = System.Windows.Application;
 
 namespace ToolSuite.InstallerChecks;
 
-/// <summary>统一开机启动的隔离检查：可控 Run 存储，不接触真实 HKCU Run 或原三个应用的启动项。</summary>
+/// <summary>统一开机启动的隔离检查：可控命令存储与原生任务解析，不修改真实启动项。</summary>
 internal static class AutoStartChecks
 {
     private const string InstalledExe = @"C:\Program Files\ToolSuite\ToolSuite.exe";
@@ -20,6 +20,105 @@ internal static class AutoStartChecks
         PartialWriteIsRolledBack(root, log);
         DisableRemovesOnlySuiteValue(root, log);
         ReflectedStateComesFromRegistry(root, log);
+        WrongTargetIsNotEffective(log);
+        MigrateLegacyStartup(log);
+        ElevatedLogonDefinition(log);
+        NativeTaskStateCanBeRead(log);
+    }
+
+    private static void NativeTaskStateCanBeRead(List<string> log)
+    {
+        // 经由真实 COM 接口访问唯一且不存在的任务，不创建任务、不触碰用户自启项。
+        var store = new ToolSuite.Windows.LogonTaskStore("ToolSuite.Suite.Checks." + Guid.NewGuid().ToString("N"));
+        var command = store.Read(SuiteAutoStart.ValueName);
+        Assert(command is null, "首次安装尚无登录任务时应返回未开启");
+        var startup = new SuiteAutoStart(store, InstalledExe);
+        Assert(!startup.IsRegistered, "任务不存在时，自启应显示未开启");
+        startup.Apply(false);
+        store.Delete(SuiteAutoStart.ValueName);
+        Assert(!startup.IsRegistered, "反复关闭不存在的自启任务应成功");
+        log.Add("真实 COM 接口：不存在的任务返回未开启，首次及重复关闭均成功");
+    }
+
+    private static void WrongTargetIsNotEffective(List<string> log)
+    {
+        var startup = new FakeRunStore();
+        startup.Values[SuiteAutoStart.ValueName] = @"""C:\missing-install\ToolSuite.exe""";
+        Assert(!new SuiteAutoStart(startup, InstalledExe).IsRegistered,
+            "启动项存在但目标错误时，不得显示为已生效");
+        log.Add("启动项必须指向当前正式 EXE，目标错误不得显示为已生效");
+    }
+
+    private static void MigrateLegacyStartup(List<string> log)
+    {
+        var tasks = new FakeRunStore();
+        var legacy = new FakeRunStore();
+        SeedOldStartupEntries(legacy);
+        legacy.Values[SuiteAutoStart.ValueName] = '"' + InstalledExe + '"';
+        var startup = new SuiteAutoStart(tasks, InstalledExe, legacy);
+        Assert(startup.IsRegistered, "旧版已开启自启应自动迁移为登录任务");
+        Assert(tasks.Values[SuiteAutoStart.ValueName] == '"' + InstalledExe + '"', "登录任务应指向当前 EXE");
+        Assert(!legacy.Values.ContainsKey(SuiteAutoStart.ValueName) && legacy.Values.Count == 3,
+            "迁移仅移除套件旧 Run 项，原三个应用保持不变");
+        startup.Apply(false);
+        Assert(!startup.IsRegistered, "关闭自启必须删除登录任务");
+
+        legacy.Values[SuiteAutoStart.ValueName] = '"' + InstalledExe + '"';
+        tasks.FailWrites = true;
+        try { _ = startup.IsRegistered; throw new Exception("迁移失败应上报"); }
+        catch (InvalidOperationException) { }
+        Assert(legacy.Values.ContainsKey(SuiteAutoStart.ValueName) && !tasks.Values.ContainsKey(SuiteAutoStart.ValueName),
+            "创建任务失败不得删除旧 Run 项或伪造生效状态");
+        tasks.FailWrites = false;
+        legacy.FailDeletes = true;
+        try { _ = startup.IsRegistered; throw new Exception("删除旧项失败应上报"); }
+        catch (InvalidOperationException) { }
+        Assert(!tasks.Values.ContainsKey(SuiteAutoStart.ValueName) && legacy.Values.ContainsKey(SuiteAutoStart.ValueName),
+            "删除旧项失败时应回滚新建任务");
+        log.Add("旧版 Run 自启迁移为登录任务，关闭清理，迁移失败回滚且保留旧项");
+    }
+
+    private static void ElevatedLogonDefinition(List<string> log)
+    {
+        // 用 Windows 自己的任务定义解析器验证真实 XML；不注册任务，不需要管理员权限。
+        var sid = System.Security.Principal.WindowsIdentity.GetCurrent().User!.Value;
+        var command = '"' + InstalledExe + '"';
+        var xml = ToolSuite.Windows.LogonTaskStore.CreateDefinition(command, sid);
+        object service = Activator.CreateInstance(Type.GetTypeFromProgID("Schedule.Service")!)!;
+        object? definition = null;
+        var objects = new List<object>();
+        try
+        {
+            dynamic scheduler = service;
+            scheduler.Connect();
+            definition = scheduler.NewTask(0);
+            dynamic task = definition;
+            task.XmlText = xml;
+            dynamic principal = task.Principal;
+            dynamic triggers = task.Triggers;
+            dynamic trigger = triggers.Item(1);
+            dynamic actions = task.Actions;
+            dynamic action = actions.Item(1);
+            dynamic settings = task.Settings;
+            objects.AddRange(new object[] { principal, triggers, trigger, actions, action, settings });
+            Assert((int)principal.RunLevel == 1, "requireAdministrator 程序必须通过最高权限任务启动，不能使用普通 Run 入口");
+            string Sid(string account) => account.StartsWith("S-1-", StringComparison.Ordinal) ? account
+                : new System.Security.Principal.NTAccount(account).Translate(typeof(System.Security.Principal.SecurityIdentifier)).Value;
+            Assert((int)principal.LogonType == 3 && Sid((string)principal.UserId) == sid,
+                "任务必须使用当前用户交互会话，不保存密码");
+            Assert((int)trigger.Type == 9 && Sid((string)trigger.UserId) == sid, "必须在当前用户登录时触发");
+            Assert((string)action.Path == InstalledExe, "任务必须直接启动 EXE，正确处理空格路径");
+            Assert((bool)settings.Enabled && !(bool)settings.DisallowStartIfOnBatteries
+                && !(bool)settings.StopIfGoingOnBatteries && (string)settings.ExecutionTimeLimit == "PT0S",
+                "登录任务不得被电池条件或默认执行时限阻断");
+        }
+        finally
+        {
+            foreach (var item in objects) System.Runtime.InteropServices.Marshal.ReleaseComObject(item);
+            if (definition is not null) System.Runtime.InteropServices.Marshal.ReleaseComObject(definition);
+            System.Runtime.InteropServices.Marshal.ReleaseComObject(service);
+        }
+        log.Add("Windows 任务解析器确认登录触发、最高权限、交互用户、正式路径与电池/时限设置");
     }
 
     /// <summary>首次使用默认关闭，构造与启动都不得写注册表。</summary>
@@ -52,7 +151,7 @@ internal static class AutoStartChecks
             && registry.Values[OldPerf] == OldPerfCommand
             && registry.Values[OldPinto] == OldPintoCommand, "不得改动原三个应用的启动项");
         Assert(controller.AutoStartError is null, "成功时不得保留失败信息");
-        log.Add("启用只写入 HKCU Run 的 ToolSuite.Suite 值并指向正式 EXE，原应用启动项不变");
+        log.Add("启用只写入 ToolSuite.Suite 自启命令并指向正式 EXE，原应用启动项不变");
     }
 
     /// <summary>注册失败必须如实反馈到设置界面，不能把失败记为已生效，也不能留下半写状态。</summary>
@@ -133,7 +232,7 @@ internal static class AutoStartChecks
         var registered = new SuiteController(new SuiteSettingsStore(Path.Combine(root, "reflect-2")), [],
             new SuiteAutoStart(registry, InstalledExe));
         Assert(registered.Settings.StartWithWindows, "注册表存在套件启动项时应显示为开启");
-        log.Add("开机启动状态以套件自己的注册表值为准，外部变更不会伪装成已生效");
+        log.Add("开机启动状态以套件自己的自启存储为准，外部变更不会伪装成已生效");
     }
 
     /// <summary>登录启动走同一宿主启动入口：只启动已启用工具，停用工具与窗口可见状态沿用套件保存数据。</summary>

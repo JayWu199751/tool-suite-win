@@ -5,10 +5,10 @@ namespace ToolSuite.Installer;
 
 public sealed record InstallResult(string InstallDirectory, string Version, bool Upgraded);
 
-/// <summary>套件自身的安装、升级与卸载。只操作给定安装目录、套件自己的 Run 值与卸载键；
+/// <summary>套件自身的安装、升级与卸载。只操作给定安装目录、套件自己的登录任务、旧 Run 值与卸载键；
 /// 从不读取、迁移或修改原三个应用的数据、安装与启动项，也不触碰 %LOCALAPPDATA%/ToolSuite 用户数据。</summary>
 public sealed class InstallerEngine(IRegistryAccess registry, IShortcutWriter shortcuts,
-    string? setupSourcePath = null, string? version = null)
+    string? setupSourcePath = null, string? version = null, IRunValueStore? startupTasks = null)
 {
     private readonly string version = version ?? SuiteIdentity.Version;
     public const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -160,10 +160,13 @@ public sealed class InstallerEngine(IRegistryAccess registry, IShortcutWriter sh
         var setupPath = Path.Combine(install, SuiteIdentity.SetupExecutableName);
         EnsureNotRunning(exePath);
         if (runningSetupPath is null) EnsureNotRunning(setupPath);
+        if (Directory.Exists(install) && !File.Exists(exePath) && !File.Exists(setupPath)
+            && !File.Exists(Path.Combine(install, "version.txt")))
+            throw new InvalidOperationException("目标目录不包含工具套件安装文件，已停止卸载：" + install);
+        // 删除登录任务失败时先停止卸载，保留完整程序以便重试，避免留下悬空启动项。
+        startupTasks?.Delete(SuiteIdentity.RunValueName);
         if (Directory.Exists(install))
         {
-            if (!File.Exists(exePath) && !File.Exists(setupPath) && !File.Exists(Path.Combine(install, "version.txt")))
-                throw new InvalidOperationException("目标目录不包含工具套件安装文件，已停止卸载：" + install);
             if (runningSetupPath is null) Directory.Delete(install, recursive: true);
             else
             {

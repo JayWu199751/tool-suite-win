@@ -74,13 +74,13 @@ internal sealed class SuiteApplication : Application
         if (exiting || settings is null) return;
         settings.Show();
     }
-    /// <summary>只有从安装后的正式 EXE 运行才注册开机启动；dotnet 宿主路径不能写进 Run 值。</summary>
+    /// <summary>正式 EXE 通过最高权限登录任务自启；迁移旧版 Run 项，dotnet 宿主不得注册。</summary>
     private static ISuiteAutoStart? CreateAutoStart()
     {
         var executable = Environment.ProcessPath;
         if (executable is null || Path.GetFileNameWithoutExtension(executable).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
             return null;
-        return new SuiteAutoStart(new HkcuRunValueStore(), executable);
+        return new SuiteAutoStart(new ToolSuite.Windows.LogonTaskStore(), executable, new HkcuRunValueStore());
     }
     private async Task RequestExitAsync()
     {

@@ -49,7 +49,7 @@ internal static class Program
     internal static string Execute(InstallerOptions options, Action<string> report)
     {
         var engine = new InstallerEngine(new WindowsRegistryAccess(), new ShellShortcutWriter(),
-            Environment.ProcessPath, SuiteIdentity.Version);
+            Environment.ProcessPath, SuiteIdentity.Version, new ToolSuite.Windows.LogonTaskStore());
         if (options.Mode == InstallerMode.Uninstall)
         {
             var install = Path.GetFullPath(options.InstallDirectory);

@@ -73,6 +73,8 @@ $sdk = Resolve-Dotnet
 $checkRoot = Join-Path $repoRoot 'artifacts/installer-checks/latest'
 Push-Location $repoRoot
 try {
+    & $sdk run --project "tests/ToolSuite.InstallerUiChecks/ToolSuite.InstallerUiChecks.csproj" -c $Configuration
+    if ($LASTEXITCODE -ne 0) { throw '安装器亮暗主题检查失败。' }
     if (Test-Path $checkRoot) { [IO.Directory]::Delete($checkRoot, $true) }
     & $sdk build "tests/ToolSuite.InstallerChecks/ToolSuite.InstallerChecks.csproj" -c $Configuration
     if ($LASTEXITCODE -ne 0) { throw '安装器隔离检查构建失败。' }

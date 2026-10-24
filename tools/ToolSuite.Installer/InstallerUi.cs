@@ -3,22 +3,50 @@ using System.Drawing.Drawing2D;
 namespace ToolSuite.Installer;
 
 /// <summary>安装程序的颜色（docs/design-system.md 第 4 节：安装程序）。
-/// 安装程序是独立的一次性对话框，只使用亮色一套，不与宿主主题联动。</summary>
-internal static class Palette
+/// 独立跟随系统的应用亮暗主题，高对比度使用系统颜色。</summary>
+internal sealed class Palette
 {
-    public static readonly Color Canvas = Color.FromArgb(0xF5, 0xF5, 0xF7);
-    public static readonly Color Card = Color.FromArgb(0xFF, 0xFF, 0xFF);
-    public static readonly Color Well = Color.FromArgb(0xF5, 0xF5, 0xF7);
-    public static readonly Color Hover = Color.FromArgb(0xE8, 0xE8, 0xED);
-    public static readonly Color Ink = Color.FromArgb(0x1D, 0x1D, 0x1F);
-    public static readonly Color InkSecondary = Color.FromArgb(0x63, 0x63, 0x6A);
-    public static readonly Color InkTertiary = Color.FromArgb(0x75, 0x75, 0x7A);
-    public static readonly Color Hairline = Color.FromArgb(0xD6, 0xD6, 0xD6);
-    public static readonly Color Strong = Color.FromArgb(0xB8, 0xB8, 0xBD);
-    public static readonly Color Accent = Color.FromArgb(0x00, 0x71, 0xE3);
-    public static readonly Color AccentHover = Color.FromArgb(0x00, 0x62, 0xC4);
-    public static readonly Color Danger = Color.FromArgb(0xC7, 0x26, 0x1F);
-    public static readonly Color FocusRing = Color.FromArgb(0x29, 0x00, 0x71, 0xE3);
+    public readonly Color Canvas = Color.FromArgb(0xF5, 0xF5, 0xF7);
+    public readonly Color Card = Color.FromArgb(0xFF, 0xFF, 0xFF);
+    public readonly Color Well = Color.FromArgb(0xF5, 0xF5, 0xF7);
+    public readonly Color Hover = Color.FromArgb(0xE8, 0xE8, 0xED);
+    public readonly Color Ink = Color.FromArgb(0x1D, 0x1D, 0x1F);
+    public readonly Color InkSecondary = Color.FromArgb(0x63, 0x63, 0x6A);
+    public readonly Color InkTertiary = Color.FromArgb(0x75, 0x75, 0x7A);
+    public readonly Color Hairline = Color.FromArgb(0xD6, 0xD6, 0xD6);
+    public readonly Color Strong = Color.FromArgb(0xB8, 0xB8, 0xBD);
+    public readonly Color Accent = Color.FromArgb(0x00, 0x71, 0xE3);
+    public readonly Color AccentHover = Color.FromArgb(0x00, 0x62, 0xC4);
+    public readonly Color Danger = Color.FromArgb(0xC7, 0x26, 0x1F);
+    public readonly Color FocusRing = Color.FromArgb(0x29, 0x00, 0x71, 0xE3);
+
+    public Palette(bool dark, bool highContrast = false)
+    {
+        if (highContrast)
+        {
+            Canvas = Card = Well = SystemColors.Window;
+            Ink = InkSecondary = InkTertiary = Hairline = Strong = Danger = SystemColors.WindowText;
+            Hover = SystemColors.Control;
+            Accent = AccentHover = FocusRing = SystemColors.Highlight;
+            return;
+        }
+        if (!dark) return;
+        Canvas = Color.FromArgb(0x0B, 0x0B, 0x0E);
+        Card = Color.FromArgb(0x14, 0x14, 0x19);
+        Well = Color.FromArgb(0x15, 0x15, 0x1A);
+        Hover = Color.FromArgb(0x17, 0xFF, 0xFF, 0xFF);
+        Ink = Color.FromArgb(0xF2, 0xF2, 0xF5);
+        InkSecondary = Color.FromArgb(0xA0, 0xA0, 0xAC);
+        InkTertiary = Color.FromArgb(0x7E, 0x7E, 0x8A);
+        Hairline = Color.FromArgb(0x0F, 0xFF, 0xFF, 0xFF);
+        Strong = Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF);
+        Accent = Color.FromArgb(0x7B, 0x77, 0xE0);
+        AccentHover = Color.FromArgb(0x6C, 0x68, 0xCB);
+        Danger = Color.FromArgb(0xE0, 0x5A, 0x52);
+        FocusRing = Color.FromArgb(0x73, 0x7B, 0x77, 0xE0);
+    }
+
+    public Color OnAccent => SystemInformation.HighContrast ? SystemColors.HighlightText : Color.White;
 
     public const string Family = "Segoe UI Variable Text";
 
@@ -98,14 +126,14 @@ internal static class Chrome
             | TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
     }
 
-    public static void Check(Graphics g, Rectangle box, bool isChecked, bool hovered, Color border)
+    public static void Check(Graphics g, Rectangle box, bool isChecked, bool hovered, Palette palette)
     {
         using var path = Rounded.Path(box, Math.Max(2, box.Width / 4));
         if (isChecked)
         {
-            using var brush = new SolidBrush(Palette.Accent);
+            using var brush = new SolidBrush(palette.Accent);
             g.FillPath(brush, path);
-            using var pen = new Pen(Color.White, Math.Max(1.6f, box.Width * 0.11f))
+            using var pen = new Pen(palette.OnAccent, Math.Max(1.6f, box.Width * 0.11f))
             {
                 StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round
             };
@@ -118,9 +146,9 @@ internal static class Chrome
         }
         else
         {
-            using var brush = new SolidBrush(Color.White);
+            using var brush = new SolidBrush(palette.Card);
             g.FillPath(brush, path);
-            using var pen = new Pen(hovered ? Palette.InkSecondary : border, 1f);
+            using var pen = new Pen(hovered ? palette.InkSecondary : palette.Strong, 1f);
             g.DrawPath(pen, path);
         }
     }

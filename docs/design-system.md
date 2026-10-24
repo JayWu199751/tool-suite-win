@@ -85,7 +85,8 @@
 | 统一设置 `PerfMonitor.App.SettingsWindow` | `#F5F5F7` / `#0B0B0E` | `#FFFFFF` / `#141419`，圆角 28 | 宿主 `UnifiedSettingsPage` 在原性能条窗口内组合内容；通用区在顶部、三个工具分组独立折叠；标题 21/600，工具分组标题 15/600，内部分组标题 12/600 |
 | 便签 `NoteWindow` | `#FFFFFF` / `#0C0C0E` | — | 圆角 28，发丝描边，激活时描边 Strong；比卡片再暗一档，菜单/提示仍用 `#141419` |
 | 导入 `ImportDialog` | 系统原生框架 | 选项卡 20 | 主选项为蓝色胶囊，其余幽灵按钮 |
-| 安装程序 `InstallerForm` | `#F5F5F7` | `#FFFFFF`，圆角 20 | 主按钮蓝色胶囊，次按钮幽灵 |
+| 循环提醒 `ReminderSettingsControl` / `ReminderWindow` | 设置沿用 Paper，弹窗 Canvas | 设置行 Canvas、弹窗行 Paper，圆角 20 | 等宽数字倒计时、胶囊操作、置顶不抢焦点；细节见[提醒界面设计](interval-reminders-design.md) |
+| 安装程序 `InstallerForm` | `#F5F5F7` / `#0B0B0E` | `#FFFFFF` / `#141419`，圆角 20 | 跟随系统应用主题，主按钮胶囊，次按钮幽灵 |
 
 ## 5. 与参考稿的差异（有意为之）
 
@@ -116,7 +117,7 @@
   便签 `Themes/`、性能与宿主各自的 `ThemeService`/`SuiteTheme`），不引入跨模块共享程序集。
 - 字典键集合固定（剪贴板 19 个 `Brush.*`，便签 20 个角色名），三套主题键必须一致。
 - 取值来源分开：暗色一列以 `docs/UI Design/Apple Dark.md` 为准，亮色一列以 `Apple Light.md` 为准。
-  两套共享同一组键，只改其中一套时不得顺手改另一套；安装程序固定用亮色一套，两者都不跟随。
+  两套共享同一组键，只改其中一套时不得顺手改另一套；安装程序独立跟随系统应用主题，不读取宿主主题偏好。
 - 暗色描边/悬停/选中是 alpha 画刷，`SolidColorBrush.Color` 不是最终观感；判断对比度或做像素比对时
   必须先按父表面合成为不透明色，否则会把 9% 白误当成纯白。
 - 宿主把画刷与控件样式拆开：`SuiteTheme` 每次外观变化写入 `Suite*` 画刷键，
@@ -137,8 +138,10 @@
   含 16–256 九档帧），exe 用它作 `ApplicationIcon`，窗口用 `Assets/app-icon-256.png`，
   托盘按 `SystemInformation.SmallIconSize` 取对应帧；资源缺失时才允许退回系统图标。
   不要再引入第二套图形或给图标加底色/描边。
-- 安装程序是独立的一次性对话框，只使用亮色一套：`tools/ToolSuite.Installer/InstallerUi.cs`
-  提供圆角卡片（20）、胶囊按钮与 16 DIP 方形勾选的绘制原语，不参与宿主主题联动。
+- 安装程序是独立的一次性对话框：`tools/ToolSuite.Installer/InstallerUi.cs`
+  提供亮暗两套颜色、圆角卡片（20）、胶囊按钮与 16 DIP 方形勾选的绘制原语。
+  窗口读取系统 `AppsUseLightTheme`，并在设置、主题或系统颜色变化通知后同步刷新客户区、目录输入框与原生标题栏；
+  高对比度优先使用系统颜色，不参与宿主主题偏好联动。
 - 安装对话框的整个客户区由窗口自己一次画完（唯一子控件是安装目录输入框）。卡片、按钮、
   勾选若各自做成自绘子控件，窗口合成时多个表面会互相覆盖，悬浮重绘后留下成片重叠的文字，
   单面绘制是这条约束的原因，改回去会复发。

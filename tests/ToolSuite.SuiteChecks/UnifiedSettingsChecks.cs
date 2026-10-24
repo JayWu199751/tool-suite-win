@@ -39,13 +39,24 @@ internal static class UnifiedSettingsChecks
         try
         {
             await controller.StartAsync();
+            tray.RefreshMenuForVerification();
+            var reminderMenu = tray.MenuForVerification.Items.OfType<MenuItem>().Single(x => (string?)x.Tag == ToolIds.Reminders);
+            var trayCreateReminder = reminderMenu.Items.OfType<MenuItem>().Single(x => Equals(x.Header, "新增提醒…"));
+            Assert(trayCreateReminder.IsEnabled, "提醒停用时托盘新增入口仍可用");
+            trayCreateReminder.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            await Task.Delay(30);
+            var initialEditor = Application.Current.Windows.OfType<ToolSuite.Reminders.ReminderEditorWindow>().Single();
+            Assert(host.Current is null && !Application.Current.Windows.OfType<PerfMonitor.App.SettingsWindow>().Any(),
+                "托盘新增只打开独立窗口，不创建统一设置窗口");
+            initialEditor.Close();
+            log.Add("真实托盘新增提醒打开独立窗口，停用时可用且不创建设置窗口");
             tray.InvokeSettingsMenuForVerification();
             var window = host.Current ?? throw new Exception("统一设置入口没有显示窗口");
             Assert(Math.Abs(window.View.ActualWidth - 380) < 1, "统一设置必须保持性能条早期设置页的 380 DIP 宽度");
             Assert(Application.Current.Windows.OfType<PerfMonitor.App.SettingsWindow>().SingleOrDefault() == window.View,
                 "统一设置必须复用性能条现有设置窗口，且只创建一个窗口");
             var sections = Descendants(window.View).OfType<Expander>().ToArray();
-            Assert(sections.Length == 3, "应按剪贴板、性能条、便签显示三个可折叠分组");
+            Assert(sections.Length == 4, "应按剪贴板、性能条、便签、循环提醒显示四个可折叠分组");
             Assert(sections.All(x => !x.IsExpanded), "首次打开工具分组默认收起");
             var fixedHeight = window.View.ActualHeight;
             var settingsScroll = (ScrollViewer)window.View.FindName("SettingsScroll");
@@ -82,7 +93,7 @@ internal static class UnifiedSettingsChecks
             Assert(((TextBlock)window.View.FindName("SaveStatusText")).Text.Contains("配置损坏"),
                 "合并页面必须保留原性能条设置的损坏配置恢复提示");
             Assert(controller.Tools.All(x => x.State == ToolState.Disabled), "打开设置不得启动停用工具");
-            log.Add("真实托盘打开复用性能条的统一设置窗口；三个工具首次收起，停用状态不变");
+            log.Add("真实托盘打开复用性能条的统一设置窗口；四个工具首次收起，停用状态不变");
 
             var clipboard = sections.Single(x => AutomationProperties.GetAutomationId(x) == "clipboard-settings");
             var performance = sections.Single(x => AutomationProperties.GetAutomationId(x) == "perf-monitor-settings");
@@ -112,6 +123,31 @@ internal static class UnifiedSettingsChecks
                 && Application.Current.Windows.OfType<PerfMonitor.App.SettingsWindow>().Count() == 1,
                 "模块入口不得另开独立设置窗口");
             log.Add("剪贴板和性能条入口复用同一窗口并定位各自分类");
+
+            Assert(await controller.ExecuteCommandAsync(ToolIds.Reminders, "settings"), "循环提醒管理入口不可用");
+            Assert(ReferenceEquals(reopened, host.Current)
+                && sections.Single(x => AutomationProperties.GetAutomationId(x) == "reminders-settings").IsExpanded,
+                "提醒入口应复用统一设置并展开循环提醒分类");
+            reopened.View.UpdateLayout();
+            var reminderControl = Descendants(reopened.View).OfType<ToolSuite.Reminders.ReminderSettingsControl>().Single();
+            var newReminder = Descendants(reminderControl).OfType<System.Windows.Controls.Button>().Single(b => Equals(b.Content, "新增提醒…"));
+            newReminder.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            reopened.View.UpdateLayout();
+            var reminderEditor = Application.Current.Windows.OfType<ToolSuite.Reminders.ReminderEditorWindow>().Single();
+            reminderEditor.UpdateLayout();
+            Assert(!Descendants(reminderControl).OfType<TextBox>().Any(), "设置只显示列表，不包含新增表单");
+            var reminderName = Descendants(reminderEditor).OfType<TextBox>().Single(t => AutomationProperties.GetName(t) == "提醒名称");
+            reminderName.Text = "宿主离线提醒";
+            Descendants(reminderEditor).OfType<System.Windows.Controls.Button>().Single(b => Equals(b.Content, "创建提醒"))
+                .RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            var reminderModule = controller.GetModule<ToolSuite.Reminders.ReminderModule>(ToolIds.Reminders)!;
+            Assert(reminderModule.Schedule.Reminders.Single().Name == "宿主离线提醒" && !reminderModule.Schedule.IsRunning,
+                "独立窗口离线新建应保存配置，不隐式启动");
+            Assert(await controller.SetEnabledAsync(ToolIds.Reminders, true), "提醒工具应能独立启用");
+            Assert(reminderModule.Schedule.IsRunning && reminderModule.Schedule.Remaining(reminderModule.Schedule.Reminders.Single().Id) is not null,
+                "启用提醒工具后开始计时");
+            Assert(await controller.SetEnabledAsync(ToolIds.Reminders, false), "提醒工具应能独立停用");
+            log.Add("管理入口定位第四分类，新增与编辑使用独立窗口，离线保存和独立启停正确");
 
             var gpu = (ToggleButton)reopened.View.FindName("GpuToggle");
             var gpuBefore = gpu.IsChecked;
