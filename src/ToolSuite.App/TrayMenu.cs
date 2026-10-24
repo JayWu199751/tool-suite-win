@@ -1,7 +1,9 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
+using System.Windows.Interop;
 using System.Windows.Media;
 using Brush = System.Windows.Media.Brush;
 using SystemColors = System.Windows.SystemColors;
@@ -12,10 +14,14 @@ namespace ToolSuite.App;
 
 /// <summary>托盘右键菜单：用 WPF ContextMenu，不再走 WinForms GDI 自绘。
 /// 皮肤只在菜单自己的资源树里（Themes/TrayMenu.xaml），不会渗到模块窗口；
-/// 画刷全部 DynamicResource，主题与高对比度变化即时跟随，无需重绘代码。</summary>
+/// 画刷全部 DynamicResource，主题与高对比度变化即时跟随，无需重绘代码。
+/// 打开时把前台转到弹出层 HWND，点击菜单外任意位置才能触发系统级收起。</summary>
 internal sealed class TrayMenu : ContextMenu
 {
     private const int MinWidthDip = 208;
+
+    /// <summary>从未收起过时 <see cref="ClosedAtTick"/> 的初值。</summary>
+    internal const long Never = long.MinValue;
 
     public TrayMenu()
     {
@@ -32,6 +38,30 @@ internal sealed class TrayMenu : ContextMenu
         MinWidth = MinWidthDip;
         FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI, Microsoft YaHei UI");
         FontSize = 13;
+    }
+
+    /// <summary>最近一次收起的 TickCount64；从未收起为 <see cref="Never"/>。
+    /// TrayHost 用它判断"这记右键刚把菜单顶下去"，防止收起后立刻重开。</summary>
+    internal long ClosedAtTick { get; private set; } = Never;
+
+    /// <summary>弹出层窗口句柄；菜单未打开（视觉树未接入窗口源）时为 <see cref="IntPtr.Zero"/>。</summary>
+    internal IntPtr PopupHandle =>
+        PresentationSource.FromVisual(this) is HwndSource source ? source.Handle : IntPtr.Zero;
+
+    protected override void OnOpened(RoutedEventArgs e)
+    {
+        base.OnOpened(e);
+        // 从托盘弹出的菜单进程没有前台，WPF 的失活收起机制不生效：点桌面、其他应用
+        // 菜单都不收起。把前台转给弹出层自己的 HWND，点击外部才会触发收起
+        // （Clipboard 模块 TrayIconHost 的同类先例）。
+        var handle = PopupHandle;
+        if (handle != IntPtr.Zero) _ = NativeMethods.SetForegroundWindow(handle);
+    }
+
+    protected override void OnClosed(RoutedEventArgs e)
+    {
+        ClosedAtTick = Environment.TickCount64;
+        base.OnClosed(e);
     }
 
     /// <summary>外观变化时由 <see cref="TrayHost"/> 下发画刷。
@@ -61,4 +91,10 @@ internal sealed class TrayMenu : ContextMenu
         }
         return text;
     }
+}
+
+internal static class NativeMethods
+{
+    [DllImport("user32.dll")]
+    internal static extern bool SetForegroundWindow(IntPtr hWnd);
 }

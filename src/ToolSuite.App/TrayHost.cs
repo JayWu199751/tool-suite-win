@@ -18,6 +18,9 @@ internal sealed class TrayHost : IDisposable
     private readonly Forms.NotifyIcon icon;
     private readonly TrayMenu menu = new();
     private readonly Icon? trayIcon;
+    /// <summary>防闪重开判定：收起与右键按下的时间戳乱序容差（毫秒）。</summary>
+    private const int ReopenSuppressToleranceMs = 100;
+    private long rightDownAt = TrayMenu.Never;
 
     public TrayHost(SuiteController controller, Action showSettings, Func<Task> exit)
     {
@@ -30,17 +33,25 @@ internal sealed class TrayHost : IDisposable
             Visible = true
         };
         // 左键单击/双击不打开任何工具；只有右键弹出菜单。
+        icon.MouseDown += (_, e) => { if (e.Button == Forms.MouseButtons.Right) rightDownAt = Environment.TickCount64; };
         icon.MouseUp += (_, e) => { if (e.Button == Forms.MouseButtons.Right) ShowMenu(); };
         BuildMenu();
     }
 
-    /// <summary>右键打开菜单；已打开时先收起（再次右键等于取消）。</summary>
+    /// <summary>右键打开菜单；已打开时先收起（再次右键等于取消）。
+    /// 菜单获得前台后，右键按下的瞬间菜单可能已被"点击外部收起"顶下去，这记右键只算收起不重开。</summary>
     private void ShowMenu()
     {
         if (menu.IsOpen) { menu.IsOpen = false; return; }
+        if (!ShouldOpenAfterRightClick(menu.ClosedAtTick, rightDownAt)) return;
         BuildMenu();
         menu.IsOpen = true;
     }
+
+    /// <summary>收起与右键按下几乎同时（含消息乱序容差）说明菜单正是被这记点击顶下去的，不得重开；
+    /// 没有按下记录（程序化打开）或早已收起则正常打开。</summary>
+    internal static bool ShouldOpenAfterRightClick(long closedAtTick, long rightDownAtTick) =>
+        rightDownAtTick == TrayMenu.Never || closedAtTick + ReopenSuppressToleranceMs < rightDownAtTick;
 
     private void BuildMenu()
     {
@@ -112,7 +123,14 @@ internal sealed class TrayHost : IDisposable
 
     internal ContextMenu MenuForVerification => menu;
     internal Icon? TrayIconForVerification => trayIcon;
+    internal IntPtr MenuPopupHandleForVerification => menu.PopupHandle;
     internal void RefreshMenuForVerification() => BuildMenu();
+    /// <summary>检查宿主用：走真实打开路径弹菜单；清掉按下记录以免被防闪重开判定拦截。</summary>
+    internal void OpenMenuForVerification()
+    {
+        rightDownAt = TrayMenu.Never;
+        ShowMenu();
+    }
     internal void InvokeSettingsMenuForVerification() => Click("settings");
     internal void InvokeExitMenuForVerification() => Click("exit");
 

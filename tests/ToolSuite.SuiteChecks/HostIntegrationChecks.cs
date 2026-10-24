@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
@@ -50,6 +51,24 @@ internal static class HostIntegrationChecks
             AssertClipboardGroupHasNoSummon(tray);
             Assert(controller.Tools.All(x => x.State == ToolState.Running), "三个真实工具应全部运行：" + Describe(controller));
             log.Add("单一托盘按剪贴板/性能条/便签分组展示状态与动作，剪贴板无呼出面板动作");
+
+            // 点击外部收起：菜单打开后前台必须转到自己的弹出层，否则点桌面/其他窗口时菜单不收起。
+            tray.OpenMenuForVerification();
+            var popup = IntPtr.Zero;
+            await WaitUntil(() => (popup = tray.MenuPopupHandleForVerification) != IntPtr.Zero, "托盘菜单弹出层就绪");
+            await Task.Delay(50); // 等 OnOpened 里的前台转移生效
+            Assert(NativeMethods.GetForegroundWindow() == popup,
+                "托盘菜单打开后前台必须落在菜单弹出层（点击外部收起的前提）");
+            tray.MenuForVerification.IsOpen = false;
+            // 防闪重开：被这记右键顶下的菜单不得立刻重开；程序化打开与早已收起的右键不受影响。
+            var now = Environment.TickCount64;
+            Assert(TrayHost.ShouldOpenAfterRightClick(TrayMenu.Never, now), "从未收起过的菜单右键必须打开");
+            Assert(TrayHost.ShouldOpenAfterRightClick(now - 5000, now), "早已收起的菜单右键必须重新打开");
+            Assert(!TrayHost.ShouldOpenAfterRightClick(now, now), "右键按下瞬间被顶下的菜单不得重开");
+            Assert(!TrayHost.ShouldOpenAfterRightClick(now, now - 50), "收起晚于按下（消息乱序）同样不得重开");
+            Assert(!TrayHost.ShouldOpenAfterRightClick(now - 40, now), "收起略早于按下（乱序容差内）也不得重开");
+            Assert(TrayHost.ShouldOpenAfterRightClick(now - 5000, TrayMenu.Never), "程序化打开不得被防闪重开拦截");
+            log.Add("托盘菜单打开即接管前台，点击外部可收起；再次右键只收起不重开");
 
             // 停用一个工具，另外两个继续运行。
             ClickMenuItem(Toggle(tray, "pinto"));
@@ -393,4 +412,10 @@ internal static class HostIntegrationChecks
     {
         if (!condition) throw new Exception(message);
     }
+}
+
+internal static class NativeMethods
+{
+    [DllImport("user32.dll")]
+    internal static extern IntPtr GetForegroundWindow();
 }
